@@ -17,6 +17,8 @@ struct OverlayRootView: View {
     /// Which screen this overlay covers — routes Authenticate to the right display.
     let screenIndex: Int
     let phaseOffset: CGFloat
+    /// The desktop wallpaper, when "Show desktop wallpaper" is on and one resolved.
+    var wallpaper: DesktopWallpaper.Source? = nil
 
     @State private var lockUIMounted = true
     @State private var lockUIOpacity: Double = 1
@@ -31,10 +33,14 @@ struct OverlayRootView: View {
             Color.black.ignoresSafeArea()
 
             if lockUIMounted {
-                Group {
+                // Inside the mounted group so fade-to-black still unmounts the video.
+                ZStack {
+                    if wallpaper != nil {
+                        WallpaperBackgroundView(source: wallpaper)
+                    }
                     if showsLockUI {
-                        LockScreenView(controller: controller, screenRole: .primary, phaseOffset: phaseOffset, screenIndex: screenIndex)
-                    } else {
+                        LockScreenView(controller: controller, screenRole: .primary, phaseOffset: phaseOffset, screenIndex: screenIndex, drawsBackdrop: wallpaper == nil)
+                    } else if wallpaper == nil {
                         AmbientScreenView(phaseOffset: phaseOffset)
                     }
                 }
