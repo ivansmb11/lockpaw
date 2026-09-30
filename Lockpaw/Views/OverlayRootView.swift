@@ -43,7 +43,7 @@ struct OverlayRootView: View {
 
             if pulseMounted {
                 // Keyed by generation so a re-ping remounts and restarts the breaths.
-                AttentionPulseView()
+                AttentionPulseView(color: controller.agentPings.glowColor)
                     .id(presentationController.attentionGeneration)
                     .opacity(pulseOpacity)
             }
@@ -101,10 +101,12 @@ struct OverlayRootView: View {
 }
 
 /// The agent-ping pulse while black, on every screen (the primary lock UI is
-/// unmounted): the lock screen's teal glow breathing the same envelope, rising from
+/// unmounted): the lock screen's glow breathing the same envelope, rising from
 /// black and settling to the pulse floor until the attention window fades back out.
 /// Under Reduce Motion the glow holds at the floor with no motion.
 private struct AttentionPulseView: View {
+    let color: Color
+
     @State private var glow: CGFloat = 0
     @AppStorage(GlowIntensity.storageKey) private var glowIntensityRaw = GlowIntensity.defaultValue.rawValue
     private var glowIntensity: GlowIntensity { GlowIntensity.resolved(from: glowIntensityRaw) }
@@ -114,8 +116,8 @@ private struct AttentionPulseView: View {
         GeometryReader { geo in
             RadialGradient(
                 stops: [
-                    .init(color: Color("LockpawTeal").opacity(glowIntensity.centreOpacity(at: glow)), location: 0),
-                    .init(color: Color("LockpawTeal").opacity(min(0.14 * glow * glowIntensity.peakScale, 0.25)), location: 0.45),
+                    .init(color: color.opacity(glowIntensity.centreOpacity(at: glow)), location: 0),
+                    .init(color: color.opacity(min(0.14 * glow * glowIntensity.peakScale, 0.25)), location: 0.45),
                     .init(color: .clear, location: 1)
                 ],
                 center: .center,

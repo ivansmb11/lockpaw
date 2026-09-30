@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- The lock screen lists **who is waiting**, one line per session under the timer — *Claude Code needs permission in my-app · 2m*, *Claude Code finished in other-repo · 12m* — newest first, four rows then "and N more", kept until you unlock. The glow takes the colour of the latest ping: teal when an agent is done, amber when it is blocked on you, red when its turn died on an API error.
+
 ## [1.6.1] - 2026-10-15
 
 ### Security

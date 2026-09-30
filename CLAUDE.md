@@ -81,6 +81,7 @@ Lockpaw/
 │   ├── FadeToBlack.swift           Fade-to-black preference + pure presentation reducer (LockPresentation / PresentationLogic)
 │   ├── PingDecision.swift          Pure agent-ping decision (state + sound pref → pulse/notify/sound) + PingGate (announce once per session/kind)
 │   ├── AgentPing.swift             Typed ping decoded from the hook payload (agent, project, kind) — shared with the CLI
+│   ├── AgentPingQueue.swift        Agents waiting while locked, one row per session
 │   ├── AgentHookConfig.swift       Pure Claude-style hook merge + Notification matcher — shared with the CLI
 │   ├── LockdownPolicy.swift        Pure gesture lockdown — swallowed trackpad/Dock event types, auth-dialog mode (#18)
 │   ├── ScreenLayout.swift          Display set overlays were built for — rebuild only on real screen changes
@@ -98,6 +99,7 @@ Lockpaw/
 │   ├── OverlayRootView.swift       Per-screen presentation switch — lock UI / pure black / attention pulse
 │   ├── MascotImage.swift           Mascot pixels for a preference — asset catalog or CustomMascot; feathered mask on custom
 │   ├── LockScreenView.swift        Lock screen — mascot, timer, message, fallback auth, agent-ping glow
+│   ├── AgentPingList.swift         Waiting-agents rows under the timer + the kind → colour mapping
 │   ├── AmbientScreenView.swift     Secondary display — morphing gradient blobs
 │   ├── MenuBarView.swift           Menu bar dropdown
 │   ├── SettingsView.swift          6 tabs; lid-closed mode, Agents (setup grid, sound, relay), hotkey, updates, supporter licence
@@ -180,7 +182,7 @@ LockpawHelper/                      (sibling of Lockpaw/) — lid-closed mode's 
 - **`.lockpawPhysicalInput` side channel** — InputBlocker's tap swallows keyboard/scroll before NSEvent monitors can see them, so the tap posts this (throttled) for physical events; mouse arrives via NSEvent global+local monitors in PresentationController.
 - **Physical vs synthetic: `eventSourceUnixProcessID == 0`** — hardware events carry PID 0; synthetic posts carry the poster's PID, so agent automation (cliclick, AppleScript) never lights the screen. Best-effort: remappers (Karabiner/BTT) repost under their own PID and won't reveal — the unlock hotkey ignores the filter, so recovery always works.
 - **The reveal click is consumed** — the local monitor returns nil for mouseDowns while not `.visible`, so the click that wakes the screen can never press the just-mounted auth button (the orphaned mouseUp is harmless).
-- **The attention pulse runs on every screen** — the primary lock UI is unmounted while black, so a ping breathes the lock screen's teal glow everywhere (`AttentionPulseView`, keyed by `attentionGeneration` so re-pings restart the breaths) for a bounded `Timing.attentionPulse`, then settles back to black. `agentAttention` survives blackness; on reveal the caption + resting glow appear (LockScreenView seeds `pingGlow` on appear). Under Reduce Motion the glow holds static at the pulse floor.
+- **The attention pulse runs on every screen** — the primary lock UI is unmounted while black, so a ping breathes the lock screen's teal glow everywhere (`AttentionPulseView`, keyed by `attentionGeneration` so re-pings restart the breaths) for a bounded `Timing.attentionPulse`, then settles back to black. `agentPings` survives blackness; on reveal the waiting-agents rows + resting glow appear (LockScreenView seeds `pingGlow` on appear). Under Reduce Motion the glow holds static at the pulse floor.
 - **The pointer stays with OverlayWindowManager's concealment in every presentation state** — fade-to-black adds no cursor calls of its own. An earlier revision hid via `NSCursor.hide()` while black, but mixing `hide()`/`unhide()` with `setHiddenUntilMouseMoves` is documented-unpredictable and in practice kills the idle re-hide for the rest of the session after the first reveal. Accepted trade: a synthetic mouse nudge can show the pointer over black for ~`Timing.cursorIdleHide` seconds before it re-conceals (the screen itself stays black — the PID filter ignores synthetic input).
 - **`stop()` leaves `presentation` untouched** — unlocking from black fades the overlay out from black with no lock-UI flash; the next `start()` resets it. `OverlayRootView`'s constant black backdrop is load-bearing: overlay windows have clear backgrounds, so the 6s cross-fade would otherwise blend through to the desktop.
 - **Fades are explicit opacity, NOT removal transitions** — `.transition(.opacity)` on a switched-out branch hard-cuts inside `NSHostingView` overlay windows on macOS 26 (verified on hardware; the PR's original transition-based version cut straight to black). `OverlayRootView` animates `@State` opacity values via `withAnimation` and unmounts the subtree only after the fade completes (generation-guarded `asyncAfter`), preserving the nothing-rendered-while-black property.
