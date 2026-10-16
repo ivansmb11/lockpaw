@@ -1,16 +1,17 @@
 import AVFoundation
 import SwiftUI
 
-/// The desktop wallpaper behind the lock UI — a muted, looping Aerial clip or a still,
-/// dimmed so the mascot, message and timer stay legible.
+/// The desktop wallpaper behind the lock UI — an Aerial clip (playing or frozen, see
+/// `WallpaperPlaybackPolicy`) or a still, dimmed so the mascot, message and timer stay
+/// legible.
 struct WallpaperBackgroundView: View {
     let content: WallpaperContent
 
     var body: some View {
         ZStack {
             switch content {
-            case .clip(let url):
-                LoopingVideoView(url: url)
+            case .clip(let clip):
+                ClipLayerView(clip: clip)
             case .still(let still):
                 StillWallpaperView(still: still)
             }
@@ -43,31 +44,47 @@ private struct StillWallpaperView: View {
     }
 }
 
-// ponytail: one decoder per screen; share a single player across displays if multi-4K playback shows up in energy use.
-private struct LoopingVideoView: NSViewRepresentable {
-    let url: URL
+/// This screen's layer on the shared clip player. The player itself belongs to
+/// `WallpaperClip`; the layer only tells it when it is in a window, so a fade to black
+/// (which unmounts the lock UI) leaves no layer and the player pauses.
+private struct ClipLayerView: NSViewRepresentable {
+    let clip: WallpaperClip
 
-    func makeNSView(context: Context) -> PlayerView {
-        PlayerView(url: url)
+    func makeNSView(context: Context) -> PlayerLayerView {
+        PlayerLayerView(clip: clip)
     }
 
-    func updateNSView(_ nsView: PlayerView, context: Context) {}
+    func updateNSView(_ nsView: PlayerLayerView, context: Context) {}
 
-    final class PlayerView: NSView {
-        private let player = AVQueuePlayer()
-        private let looper: AVPlayerLooper
+    static func dismantleNSView(_ nsView: PlayerLayerView, coordinator: ()) {
+        nsView.detach()
+    }
 
-        init(url: URL) {
-            looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
+    final class PlayerLayerView: NSView {
+        private let clip: WallpaperClip
+        private let playerLayer: AVPlayerLayer
+        private var counted = false
+        private var readyObservation: NSKeyValueObservation?
+
+        init(clip: WallpaperClip) {
+            self.clip = clip
+            playerLayer = AVPlayerLayer(player: clip.player)
             super.init(frame: .zero)
-            let layer = AVPlayerLayer(player: player)
-            layer.videoGravity = .resizeAspectFill
-            self.layer = layer
+            playerLayer.videoGravity = .resizeAspectFill
+            // Fade the first frame in rather than popping from black once it decodes.
+            playerLayer.opacity = 0
+            layer = playerLayer
             wantsLayer = true
-            player.isMuted = true
-            // Keep the display awake decisions with SleepPreventer, not the player.
-            player.preventsDisplaySleepDuringVideoPlayback = false
-            player.play()
+            readyObservation = playerLayer.observe(\.isReadyForDisplay, options: [.initial, .new]) { layer, _ in
+                guard layer.isReadyForDisplay else { return }
+                DispatchQueue.main.async {
+                    CATransaction.begin()
+                    CATransaction.setAnimationDuration(0.8)
+                    CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.16, 1, 0.3, 1))
+                    layer.opacity = 1
+                    CATransaction.commit()
+                }
+            }
         }
 
         @available(*, unavailable)
@@ -75,7 +92,18 @@ private struct LoopingVideoView: NSViewRepresentable {
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
-            if window == nil { player.pause() } else { player.play() }
+            if window != nil, !counted {
+                counted = true
+                clip.layerAppeared()
+            } else if window == nil {
+                detach()
+            }
+        }
+
+        func detach() {
+            guard counted else { return }
+            counted = false
+            clip.layerDisappeared()
         }
     }
 }

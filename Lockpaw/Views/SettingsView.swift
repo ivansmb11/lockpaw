@@ -119,6 +119,7 @@ struct SettingsView: View {
     @AppStorage(FadeToBlack.enabledKey) private var fadeToBlackEnabled = FadeToBlack.defaultEnabled
     @AppStorage(FadeToBlack.storageKey) private var fadeToBlackDelay = FadeToBlack.defaultValue
     @AppStorage(DesktopWallpaper.enabledKey) private var showDesktopWallpaper = DesktopWallpaper.defaultEnabled
+    @AppStorage(WallpaperMotion.storageKey) private var wallpaperMotion = WallpaperMotion.defaultValue
     @AppStorage(Constants.showMenuBarIconKey) private var showMenuBarIcon = true
     @AppStorage(Constants.lidClosedModeKey) private var lidClosedMode = false
     @AppStorage(Constants.unlockWithMacKey) private var unlockWithMac = false
@@ -308,11 +309,23 @@ struct SettingsView: View {
 
                 SettingsDivider()
 
-                SettingsRow("Desktop wallpaper", subtitle: "Show your macOS wallpaper behind the lock screen. Aerials play.") {
+                SettingsRow("Desktop wallpaper", subtitle: "Show your macOS wallpaper behind the lock screen, Aerials included.") {
                     SettingsCheckbox(isOn: $showDesktopWallpaper)
                 }
                 .onChange(of: showDesktopWallpaper) { _, isOn in
                     if isOn { WallpaperController.requestAccessToStills() }
+                }
+
+                if showDesktopWallpaper {
+                    SettingsDivider()
+
+                    SettingsRow("Aerials move") {
+                        SettingsSegmentedControl(
+                            selection: $wallpaperMotion,
+                            options: WallpaperMotion.allCases.map { ($0.displayName, $0.rawValue) },
+                            width: 250
+                        )
+                    }
                 }
 
                 SettingsDivider()

@@ -238,7 +238,10 @@ class LockController: ObservableObject {
         let mirrorAll = UserDefaults.standard.integer(forKey: "multiDisplayMode") == 1
         let fadeTimeout = FadeToBlack.currentTimeout
         if UserDefaults.standard.bool(forKey: DesktopWallpaper.enabledKey) {
-            wallpaper.begin(reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+            wallpaper.begin(
+                motion: WallpaperMotion.current,
+                reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            )
         }
         guard overlayManager.showOverlay(contentFactory: { [weak self] index, isPrimary in
             guard let self else { return AnyView(Color.black) }

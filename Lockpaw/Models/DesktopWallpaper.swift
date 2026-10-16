@@ -57,13 +57,11 @@ enum DesktopWallpaper {
     static var aerialsDirectory: URL { wallpaperDirectory.appendingPathComponent("aerials", isDirectory: true) }
 
     /// The wallpaper for `screen` right now. `indexPlist` and `managedSpaces` are read
-    /// once per lock by the caller and shared by every screen. Under Reduce Motion an
-    /// Aerial resolves to the still, so nothing moves.
-    static func current(
-        for screen: NSScreen, indexPlist: Data?, managedSpaces: [[String: Any]]?, reduceMotion: Bool
-    ) -> Source? {
+    /// once per lock by the caller and shared by every screen. Whether an Aerial moves
+    /// (Reduce Motion, battery, the setting) is `WallpaperPlaybackPolicy`'s call — a
+    /// paused clip still shows the Aerial itself, where NSWorkspace's still may not.
+    static func current(for screen: NSScreen, indexPlist: Data?, managedSpaces: [[String: Any]]?) -> Source? {
         let still = NSWorkspace.shared.desktopImageURL(for: screen)
-        guard !reduceMotion else { return still.map(Source.image) }
         let display = DisplaySpaces.uuid(for: screen)
         return source(
             indexPlist: indexPlist,
