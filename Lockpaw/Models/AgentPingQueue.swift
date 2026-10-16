@@ -85,11 +85,21 @@ struct AgentPingQueue: Equatable {
         return newestFirst.filter { $0.kind.status.isUrgent } + newestFirst.filter { !$0.kind.status.isUrgent }
     }
 
-    /// Sessions per state, in `AgentPingStatus` order, zero counts left out.
-    var tally: [(status: AgentPingStatus, count: Int)] {
+    /// Sessions per state, in `AgentPingStatus` order (urgent first, like the rows), zero
+    /// counts left out: "1 waiting · 2 done".
+    var tally: [AgentPingTally] {
         AgentPingStatus.allCases.compactMap { status in
             let count = pings.filter { $0.kind.status == status }.count
-            return count > 0 ? (status, count) : nil
+            return count > 0 ? AgentPingTally(status: status, count: count) : nil
         }
     }
+}
+
+/// One segment of the lock screen's tally.
+struct AgentPingTally: Equatable, Identifiable {
+    let status: AgentPingStatus
+    let count: Int
+
+    var id: AgentPingStatus { status }
+    var label: String { status.tallyLabel(count: count) }
 }

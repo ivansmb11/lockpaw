@@ -157,7 +157,7 @@ final class AgentPingQueueTests: XCTestCase {
 
         XCTAssertEqual(queue.tally.map { $0.status }, [.waiting, .error, .done])
         XCTAssertEqual(queue.tally.map { $0.count }, [1, 1, 2])
-        XCTAssertEqual(queue.tally.map { $0.status.tallyLabel(count: $0.count) }, ["1 waiting", "1 error", "2 done"])
+        XCTAssertEqual(queue.tally.map(\.label), ["1 waiting", "1 error", "2 done"])
     }
 
     func testTallyLabels() {

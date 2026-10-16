@@ -140,12 +140,19 @@ struct LockScreenView: View {
                         .opacity(controller.isAuthenticating || controller.unlockSucceeded ? 0.15 : 1)
                         .allowsHitTesting(false)
 
-                        if !controller.agentPings.isEmpty && !controller.unlockSucceeded {
-                            AgentPingList(queue: controller.agentPings, breathe: breathe)
-                                .transition(.opacity)
-                        }
+                        // Who is waiting — tally, then a row per session; stays until
+                        // unlock. Always mounted (empty until the first ping) and faded by
+                        // explicit opacity: removal transitions hard-cut in the overlay on
+                        // macOS 26. The animations are scoped to the list so a ping never
+                        // opens an animated transaction over the breathing mascot.
+                        AgentPingList(queue: controller.agentPings, breathe: breathe)
+                            .opacity(controller.agentPings.isEmpty || controller.unlockSucceeded ? 0 : 1)
+                            .opacity(appeared ? 1 : 0)
+                            .opacity(controller.isAuthenticating ? 0.15 : 1)
+                            .animation(Constants.Anim.gentle, value: controller.agentPings)
+                            .animation(Constants.Anim.gentle, value: controller.unlockSucceeded)
+                            .animation(Constants.Anim.gentle, value: controller.isAuthenticating)
                     }
-                    .animation(Constants.Anim.gentle, value: controller.agentPings)
 
                     Spacer()
 

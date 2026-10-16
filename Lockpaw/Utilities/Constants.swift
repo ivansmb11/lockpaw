@@ -14,6 +14,11 @@ enum Constants {
     /// UserDefaults key: play a sound on agent ping. Off by default for shared spaces.
     static let agentPingSoundKey = "agentPingSound"
 
+    /// UserDefaults key: name the project in the lock screen's agent rows ("Claude Code
+    /// finished in web-app"). Off by default — anyone walking past can read a lock screen.
+    /// Notifications always name it.
+    static let lockScreenShowsProjectsKey = "lockScreenShowsProjects"
+
     /// UserDefaults key: show the menu bar icon. On by default; when off, the hotkey,
     /// the `lockpaw` CLI, `lockpaw://settings`, and reopening the app are the ways in.
     static let showMenuBarIconKey = "showMenuBarIcon"
