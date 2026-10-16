@@ -7,6 +7,17 @@ import SwiftUI
 struct WallpaperBackgroundView: View {
     let content: WallpaperContent
 
+    /// The scrim: an even dim, plus extra shade behind the centred content and under the
+    /// unlock prompt, so the edges keep more of the wallpaper than the text does. Chosen
+    /// by rendering the lock screen over frames of real Aerials and a near-white sky:
+    /// these put the dimmest text (the timer, white at 0.35) at about 3.1:1 over the
+    /// Aerials — what it gets on today's black lock screen (3.0:1) — and 2.5:1 over the
+    /// sky, where the old flat 35% gave 1.5:1. The `.plusLighter` ping glow still doubles
+    /// the centre's luminance at its peak on every background tried.
+    static let dim = 0.50
+    static let centreShade = 0.35
+    static let promptShade = 0.35
+
     var body: some View {
         ZStack {
             switch content {
@@ -16,11 +27,28 @@ struct WallpaperBackgroundView: View {
                 StillWallpaperView(still: still)
             }
 
-            Color.black.opacity(0.35)
+            scrim
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+
+    private var scrim: some View {
+        GeometryReader { geo in
+            ZStack {
+                Color.black.opacity(Self.dim)
+                RadialGradient(
+                    colors: [.black.opacity(Self.centreShade), .clear],
+                    center: .center, startRadius: 0,
+                    endRadius: max(geo.size.width, geo.size.height) * 0.55
+                )
+                LinearGradient(
+                    stops: [.init(color: .clear, location: 0.6), .init(color: .black.opacity(Self.promptShade), location: 1)],
+                    startPoint: .top, endPoint: .bottom
+                )
+            }
+        }
     }
 }
 
