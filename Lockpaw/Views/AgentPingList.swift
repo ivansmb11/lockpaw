@@ -56,17 +56,3 @@ extension AgentPingStatus {
         }
     }
 }
-
-extension AgentGlowTone {
-    var color: Color {
-        switch self {
-        case .teal: return Color("LockpawTeal")
-        case .amber: return Color("LockpawAmber")
-        }
-    }
-}
-
-extension AgentPingQueue {
-    /// The glow takes the colour of the most urgent outstanding ping.
-    var glowColor: Color { glowTone.color }
-}

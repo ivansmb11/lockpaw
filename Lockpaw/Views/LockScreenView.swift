@@ -297,20 +297,7 @@ struct LockScreenView: View {
             // Attention glow — fires on an agent ping. Bright and full-screen so it
             // reads from across a room while the screen stays covered.
             if pingGlow > 0 {
-                // Mid-stop keeps a wide band at full saturation — a single
-                // stop-to-clear ramp washed the brand green toward pale cyan.
-                RadialGradient(
-                    stops: [
-                        .init(color: controller.agentPings.glowColor.opacity(glowIntensity.centreOpacity(at: pingGlow)), location: 0),
-                        .init(color: controller.agentPings.glowColor.opacity(min(0.14 * pingGlow * glowIntensity.peakScale, 0.25)), location: 0.45),
-                        .init(color: .clear, location: 1)
-                    ],
-                    center: .center, startRadius: 0,
-                    endRadius: max(geo.size.width, geo.size.height) * 0.8
-                )
-                .ignoresSafeArea()
-                .blendMode(.plusLighter)
-                .allowsHitTesting(false)
+                AgentGlow(color: controller.agentPings.glowTone, level: pingGlow)
             }
         }
     }
