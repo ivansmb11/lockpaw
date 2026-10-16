@@ -50,6 +50,7 @@ class LockController: ObservableObject {
     private let authenticator = Authenticator()
     private let sleepPreventer = SleepPreventer()
     private let presentationController = PresentationController()
+    private let wallpaper = WallpaperController()
 
     private var timer: Timer?
     private var sleepObserver: Any?
@@ -236,21 +237,12 @@ class LockController: ObservableObject {
 
         let mirrorAll = UserDefaults.standard.integer(forKey: "multiDisplayMode") == 1
         let fadeTimeout = FadeToBlack.currentTimeout
-        let showsWallpaper = UserDefaults.standard.bool(forKey: DesktopWallpaper.enabledKey)
-        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        // Read once per lock and shared by every screen (and any rebuild).
-        let wallpaperIndex = showsWallpaper ? try? Data(contentsOf: DesktopWallpaper.indexURL) : nil
-        let managedSpaces = showsWallpaper ? DisplaySpaces.managedDisplaySpaces() : nil
+        if UserDefaults.standard.bool(forKey: DesktopWallpaper.enabledKey) {
+            wallpaper.begin(reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+        }
         guard overlayManager.showOverlay(contentFactory: { [weak self] index, isPrimary in
             guard let self else { return AnyView(Color.black) }
-            // The factory runs once per entry of NSScreen.screens, in order.
-            let screens = NSScreen.screens
-            let wallpaper = showsWallpaper && screens.indices.contains(index)
-                ? DesktopWallpaper.current(
-                    for: screens[index], indexPlist: wallpaperIndex,
-                    managedSpaces: managedSpaces, reduceMotion: reduceMotion
-                )
-                : nil
+            let wallpaper = self.wallpaper.content(forScreenAt: index)
             return AnyView(OverlayRootView(
                 controller: self,
                 presentationController: self.presentationController,
@@ -268,6 +260,7 @@ class LockController: ObservableObject {
             self?.armPassiveAuth()
         }) else {
             logger.error("Lock failed — no screens available for overlay")
+            wallpaper.end()
             sleepPreventer.allowSleep()
             transitionTo(.unlocked)
             lastError = "No screens available"
@@ -540,6 +533,7 @@ class LockController: ObservableObject {
         clearAgentAttention()
         state = .unlocked
         overlayManager.dismissOverlay(animated: true)
+        wallpaper.end()
         inputBlocker.stopBlocking()
         sleepPreventer.allowSleep()
         LidSleepController.shared.lockEnded()
@@ -560,6 +554,7 @@ class LockController: ObservableObject {
         clearAgentAttention()
         state = .unlocked
         overlayManager.dismissOverlay()
+        wallpaper.end()
         inputBlocker.stopBlocking()
         sleepPreventer.allowSleep()
         LidSleepController.shared.lockEnded()

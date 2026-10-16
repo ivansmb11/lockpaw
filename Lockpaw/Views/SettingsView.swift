@@ -311,6 +311,9 @@ struct SettingsView: View {
                 SettingsRow("Desktop wallpaper", subtitle: "Show your macOS wallpaper behind the lock screen. Aerials play.") {
                     SettingsCheckbox(isOn: $showDesktopWallpaper)
                 }
+                .onChange(of: showDesktopWallpaper) { _, isOn in
+                    if isOn { WallpaperController.requestAccessToStills() }
+                }
 
                 SettingsDivider()
 

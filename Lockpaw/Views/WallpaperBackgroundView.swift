@@ -2,33 +2,44 @@ import AVFoundation
 import SwiftUI
 
 /// The desktop wallpaper behind the lock UI — a muted, looping Aerial clip or a still,
-/// dimmed so the mascot, message and timer stay legible. Draws nothing when no
-/// wallpaper resolves, leaving the overlay's black backdrop.
+/// dimmed so the mascot, message and timer stay legible.
 struct WallpaperBackgroundView: View {
-    let source: DesktopWallpaper.Source?
+    let content: WallpaperContent
 
     var body: some View {
         ZStack {
-            switch source {
-            case .video(let url):
+            switch content {
+            case .clip(let url):
                 LoopingVideoView(url: url)
-            case .image(let url):
-                if let image = NSImage(contentsOf: url) {
-                    Image(nsImage: image)
-                        .resizable()
-                        .scaledToFill()
-                }
-            case nil:
-                EmptyView()
+            case .still(let still):
+                StillWallpaperView(still: still)
             }
 
-            if source != nil {
-                Color.black.opacity(0.35)
-            }
+            Color.black.opacity(0.35)
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+}
+
+/// Draws the already-decoded still; nothing until the decode lands, then fades it in
+/// over the overlay's black backdrop (explicit opacity — see OverlayRootView).
+private struct StillWallpaperView: View {
+    @ObservedObject var still: WallpaperStill
+
+    var body: some View {
+        Color.clear
+            .overlay {
+                if let image = still.image {
+                    Image(decorative: image, scale: 1)
+                        .resizable()
+                        .scaledToFill()
+                }
+            }
+            .clipped()
+            .opacity(still.image == nil ? 0 : 1)
+            .animation(Constants.Anim.entrance, value: still.image == nil)
     }
 }
 
