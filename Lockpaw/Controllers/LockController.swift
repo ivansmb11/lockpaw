@@ -238,12 +238,18 @@ class LockController: ObservableObject {
         let fadeTimeout = FadeToBlack.currentTimeout
         let showsWallpaper = UserDefaults.standard.bool(forKey: DesktopWallpaper.enabledKey)
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        // Read once per lock and shared by every screen (and any rebuild).
+        let wallpaperIndex = showsWallpaper ? try? Data(contentsOf: DesktopWallpaper.indexURL) : nil
+        let managedSpaces = showsWallpaper ? DisplaySpaces.managedDisplaySpaces() : nil
         guard overlayManager.showOverlay(contentFactory: { [weak self] index, isPrimary in
             guard let self else { return AnyView(Color.black) }
             // The factory runs once per entry of NSScreen.screens, in order.
             let screens = NSScreen.screens
             let wallpaper = showsWallpaper && screens.indices.contains(index)
-                ? DesktopWallpaper.current(for: screens[index], reduceMotion: reduceMotion)
+                ? DesktopWallpaper.current(
+                    for: screens[index], indexPlist: wallpaperIndex,
+                    managedSpaces: managedSpaces, reduceMotion: reduceMotion
+                )
                 : nil
             return AnyView(OverlayRootView(
                 controller: self,
