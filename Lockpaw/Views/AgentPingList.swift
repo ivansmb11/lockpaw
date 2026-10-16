@@ -1,21 +1,21 @@
 import SwiftUI
 
-/// The agents waiting on the user, newest first — the standing companion to the glow
+/// The agents waiting on the user, urgent first — the standing companion to the glow
 /// pulses, shown until unlock. Capped so a busy afternoon cannot push the unlock
 /// prompt off a small screen.
 struct AgentPingList: View {
-    let pings: [AgentPing]
+    let queue: AgentPingQueue
     let breathe: CGFloat
 
     static let maxRows = 4
 
     var body: some View {
         VStack(spacing: 6) {
-            ForEach(pings.suffix(Self.maxRows).reversed()) { ping in
+            ForEach(queue.rows.prefix(Self.maxRows)) { ping in
                 row(ping)
             }
-            if pings.count > Self.maxRows {
-                Text("and \(pings.count - Self.maxRows) more")
+            if queue.pings.count > Self.maxRows {
+                Text("and \(queue.pings.count - Self.maxRows) more")
                     .font(.lockCaption)
                     .foregroundStyle(.white.opacity(0.3))
                     .tracking(0.5)
@@ -27,7 +27,7 @@ struct AgentPingList: View {
     private func row(_ ping: AgentPing) -> some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(ping.kind.color)
+                .fill(ping.kind.status.dotColor)
                 .frame(width: 5, height: 5)
                 .opacity(0.55 + breathe * 0.3)
             Text(ping.summary())
@@ -45,19 +45,28 @@ struct AgentPingList: View {
     }
 }
 
-extension AgentPing.Kind {
-    /// Teal when the agent is done, amber when it is blocked on the user, red when its
-    /// turn died on an API error. A bare ping keeps the original teal.
+extension AgentPingStatus {
+    /// The row's marker: teal done, amber waiting, red for an error — the one place red
+    /// appears for an agent, since the glow itself stays amber.
+    var dotColor: Color {
+        switch self {
+        case .done, .attention: return Color("LockpawTeal")
+        case .waiting: return Color("LockpawAmber")
+        case .error: return Color("LockpawError")
+        }
+    }
+}
+
+extension AgentGlowTone {
     var color: Color {
         switch self {
-        case .finished, .attention: return Color("LockpawTeal")
-        case .permission, .needsInput: return Color("LockpawAmber")
-        case .rateLimited, .failed: return Color("LockpawError")
+        case .teal: return Color("LockpawTeal")
+        case .amber: return Color("LockpawAmber")
         }
     }
 }
 
 extension AgentPingQueue {
-    /// The glow takes the colour of whoever pinged last.
-    var glowColor: Color { latest?.kind.color ?? Color("LockpawTeal") }
+    /// The glow takes the colour of the most urgent outstanding ping.
+    var glowColor: Color { glowTone.color }
 }

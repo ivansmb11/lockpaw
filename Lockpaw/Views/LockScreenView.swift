@@ -141,7 +141,7 @@ struct LockScreenView: View {
                         .allowsHitTesting(false)
 
                         if !controller.agentPings.isEmpty && !controller.unlockSucceeded {
-                            AgentPingList(pings: controller.agentPings.pings, breathe: breathe)
+                            AgentPingList(queue: controller.agentPings, breathe: breathe)
                                 .transition(.opacity)
                         }
                     }
