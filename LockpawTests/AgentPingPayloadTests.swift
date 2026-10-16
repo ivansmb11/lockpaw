@@ -136,8 +136,15 @@ final class AgentPingPayloadTests: XCTestCase {
 
     // MARK: - Identity
 
-    func testIdentityIsTheSession() {
-        XCTAssertEqual(ping(["agent": "claude", "session_id": "abc"]).id, "abc")
+    func testIdentityIsAgentAndSession() {
+        XCTAssertEqual(ping(["agent": "claude", "session_id": "abc"]).id, "Claude Code/abc")
+    }
+
+    func testIdentity_sameSessionIDFromTwoAgentsAreTwoRows() {
+        XCTAssertNotEqual(
+            ping(["agent": "claude", "session_id": "abc"]).id,
+            ping(["agent": "gemini", "session_id": "abc"]).id
+        )
     }
 
     func testIdentityWithoutASession_isAgentAndProject() {

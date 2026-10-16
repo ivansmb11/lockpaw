@@ -27,8 +27,8 @@ final class AgentPingQueueTests: XCTestCase {
         var queue = AgentPingQueue()
         queue.record(ping(session: "a"))
         queue.record(ping(session: "b"))
-        XCTAssertEqual(queue.pings.map(\.id), ["a", "b"])
-        XCTAssertEqual(queue.latest?.id, "b")
+        XCTAssertEqual(queue.pings.map(\.sessionID), ["a", "b"])
+        XCTAssertEqual(queue.latest?.sessionID, "b")
     }
 
     func testRepeatPingFromTheSameSession_replacesItsRowAndMovesItLast() {
@@ -37,7 +37,7 @@ final class AgentPingQueueTests: XCTestCase {
         queue.record(ping(session: "b", at: 1))
         queue.record(ping(session: "a", event: "Stop", at: 2))
 
-        XCTAssertEqual(queue.pings.map(\.id), ["b", "a"])
+        XCTAssertEqual(queue.pings.map(\.sessionID), ["b", "a"])
         XCTAssertEqual(queue.latest?.kind, .finished)
         XCTAssertEqual(queue.latest?.receivedAt, Date(timeIntervalSince1970: 2))
     }
@@ -49,7 +49,7 @@ final class AgentPingQueueTests: XCTestCase {
         queue.record(ping(.permission, session: "b", at: 10))
         queue.record(ping(.finished, session: "a", at: 60))
 
-        XCTAssertEqual(queue.pings.map(\.id), ["a", "b"])
+        XCTAssertEqual(queue.pings.map(\.sessionID), ["a", "b"])
         XCTAssertEqual(queue.pings.first?.receivedAt, Date(timeIntervalSince1970: 0))
     }
 
@@ -77,7 +77,7 @@ final class AgentPingQueueTests: XCTestCase {
         queue.record(ping(.permission, session: "a", at: 0))
         queue.record(ping(.finished, session: "b", at: 5))
 
-        XCTAssertEqual(queue.glowPing?.id, "a")
+        XCTAssertEqual(queue.glowPing?.sessionID, "a")
         XCTAssertEqual(queue.glowTone, .amber)
     }
 
@@ -87,7 +87,7 @@ final class AgentPingQueueTests: XCTestCase {
         queue.record(ping(.finished, session: "b", at: 5))
         queue.record(ping(.attention, session: "c", at: 6))
 
-        XCTAssertEqual(queue.glowPing?.id, "a")
+        XCTAssertEqual(queue.glowPing?.sessionID, "a")
         XCTAssertEqual(queue.glowTone, .amber)
     }
 
@@ -95,17 +95,17 @@ final class AgentPingQueueTests: XCTestCase {
         var queue = AgentPingQueue()
         queue.record(ping(.permission, session: "a", at: 0))
         queue.record(ping(.failed, session: "b", at: 5))
-        XCTAssertEqual(queue.glowPing?.id, "b")
+        XCTAssertEqual(queue.glowPing?.sessionID, "b")
 
         queue.record(ping(.needsInput, session: "c", at: 9))
-        XCTAssertEqual(queue.glowPing?.id, "c")
+        XCTAssertEqual(queue.glowPing?.sessionID, "c")
     }
 
     func testTheLatestBreaksTiesBetweenCalmPings() {
         var queue = AgentPingQueue()
         queue.record(ping(.finished, session: "a", at: 0))
         queue.record(ping(.attention, session: "b", at: 5))
-        XCTAssertEqual(queue.glowPing?.id, "b")
+        XCTAssertEqual(queue.glowPing?.sessionID, "b")
         XCTAssertEqual(queue.glowTone, .teal)
     }
 
@@ -117,7 +117,7 @@ final class AgentPingQueueTests: XCTestCase {
         queue.record(ping(.finished, session: "a", at: 9))
 
         XCTAssertEqual(queue.glowTone, .teal)
-        XCTAssertEqual(queue.glowPing?.id, "a")
+        XCTAssertEqual(queue.glowPing?.sessionID, "a")
     }
 
     /// Red is reserved for auth failure; an agent error glows amber and carries a red marker.
@@ -145,7 +145,7 @@ final class AgentPingQueueTests: XCTestCase {
         queue.record(ping(.failed, session: "c", at: 2))
         queue.record(ping(.finished, session: "d", at: 3))
 
-        XCTAssertEqual(queue.rows.map(\.id), ["c", "a", "d", "b"])
+        XCTAssertEqual(queue.rows.map(\.sessionID), ["c", "a", "d", "b"])
     }
 
     func testTallyCountsSessionsPerStateInAFixedOrder() {

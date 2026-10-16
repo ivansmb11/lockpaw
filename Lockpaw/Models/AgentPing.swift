@@ -60,9 +60,14 @@ struct AgentPing: Equatable, Identifiable {
     let sessionID: String?
     let receivedAt: Date
 
-    /// One row per session on the lock screen. Pings without a session (agents whose
-    /// hooks send no payload) collapse per agent and project instead.
-    var id: String { sessionID ?? "\(agent ?? "")|\(project ?? "")" }
+    /// One row per session on the lock screen, keyed by agent and session like `PingGate`,
+    /// so two agents that happen to share a session id never overwrite each other's row.
+    /// Pings without a session (agents whose hooks send no payload) collapse per agent
+    /// and project instead.
+    var id: String {
+        if let sessionID { return "\(agent ?? "-")/\(sessionID)" }
+        return "\(agent ?? "")|\(project ?? "")"
+    }
 
     /// What the notification and the lock screen say. Project names are opt-in on the
     /// lock screen (anyone walking past can read it), so callers choose.

@@ -127,7 +127,7 @@ final class PingIntakeTests: XCTestCase {
         var gate = PingGate()
         XCTAssertTrue(PingIntake.receive(ping(.finished, agent: "Codex", session: "t1"), decision: locked, queue: &queue, gate: &gate, now: now))
         XCTAssertTrue(PingIntake.receive(ping(.permission, session: "s9", at: 1), decision: locked, queue: &queue, gate: &gate, now: now.addingTimeInterval(1)))
-        XCTAssertEqual(queue.pings.map(\.id), ["t1", "s9"])
+        XCTAssertEqual(queue.pings.map(\.sessionID), ["t1", "s9"])
     }
 
     /// Unlocked or mid-transition: nothing recorded, and the gate is left untouched so the
