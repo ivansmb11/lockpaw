@@ -390,17 +390,18 @@ class LockController: ObservableObject {
 
     // MARK: - Private
 
-    /// React to an agent ping per `PingDecision` (nothing unless locked). Every ping is
-    /// recorded, so two agents finishing together both get a row; only the glow and the
-    /// notification go through `PingGate`, which announces a session once per state.
+    /// React to an agent ping per `PingDecision` (nothing unless locked). `PingIntake`
+    /// records every ping, so two agents finishing together both get a row; only the
+    /// glow, the notification and the relay go through `PingGate`.
     private func handlePing(_ ping: AgentPing) {
         let soundEnabled = UserDefaults.standard.bool(forKey: Constants.agentPingSoundKey)
         let decision = PingDecision.make(state: state, soundEnabled: soundEnabled)
-        guard decision.shouldPulse || decision.shouldNotify else { return }
-        agentPings.record(ping)
-        // Only consulted while locked, so a turn that ended before the lock can't
-        // pre-empt the one announcement it gets after (idle_prompt).
-        guard pingGate.admits(ping) else { return }
+        var queue = agentPings
+        let announce = PingIntake.receive(ping, decision: decision, queue: &queue, gate: &pingGate)
+        // Publish only a real change: a repeat in the same state leaves the queue as it
+        // was, and an empty publish would still re-render the lock screen mid-breath.
+        if queue != agentPings { agentPings = queue }
+        guard announce else { return }
         if decision.shouldPulse {
             pingPulse &+= 1
             presentationController.notePing()
