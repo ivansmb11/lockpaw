@@ -4,7 +4,9 @@
 
 ### Added
 
-- The lock screen lists **who is waiting**, one line per session under the timer — *Claude Code needs permission in my-app · 2m*, *Claude Code finished in other-repo · 12m* — newest first, four rows then "and N more", kept until you unlock. The glow takes the colour of the latest ping: teal when an agent is done, amber when it is blocked on you, red when its turn died on an API error.
+- The lock screen says **who is waiting**. Under the timer, a tally once more than one agent has pinged (*1 waiting · 2 done*), then one line per session with how long it has waited: *Claude Code needs permission · 2m*, *Codex finished · 12m*. Kept until you unlock; a repeat ping from the same session updates its line instead of adding one, and every ping is listed even when two agents finish in the same second. Contributed in #25 by @BkOff-fr.
+- The glow says **how urgent**: amber while any agent is blocked on you or stopped on an error, teal when they're all done. A later "done" never repaints a waiting glow teal, and the colour now fades instead of snapping. Errors get a small red dot on their line rather than a red screen.
+- **Show project names on the lock screen** (Settings → Agents, off by default). Anyone walking past can read a lock screen, so its lines leave the project out unless you turn this on. Notifications always name it.
 
 ## [1.6.1] - 2026-10-15
 
