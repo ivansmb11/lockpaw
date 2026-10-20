@@ -14,6 +14,11 @@ enum Constants {
     /// UserDefaults key: play a sound on agent ping. Off by default for shared spaces.
     static let agentPingSoundKey = "agentPingSound"
 
+    /// UserDefaults key: name the project in the lock screen's agent rows ("Claude Code
+    /// finished in web-app"). Off by default — anyone walking past can read a lock screen.
+    /// Notifications always name it.
+    static let lockScreenShowsProjectsKey = "lockScreenShowsProjects"
+
     /// UserDefaults key: show the menu bar icon. On by default; when off, the hotkey,
     /// the `lockpaw` CLI, `lockpaw://settings`, and reopening the app are the ways in.
     static let showMenuBarIconKey = "showMenuBarIcon"
@@ -85,6 +90,24 @@ enum Constants {
         if hours > 0 { return String(format: "%dh %02dm", hours, minutes) }
         if minutes > 0 { return String(format: "%dm %02ds", minutes, seconds) }
         return String(format: "%ds", seconds)
+    }
+
+    /// Age of an agent ping: seconds for the first minute, so a fresh row visibly counts
+    /// up, then minutes — the row only has to say roughly how long the agent has waited.
+    static func formatWaitTime(_ interval: TimeInterval) -> String {
+        let seconds = max(0, Int(interval))
+        if seconds < 60 { return "\(seconds)s" }
+        if seconds < 3600 { return "\(seconds / 60)m" }
+        return formatElapsedTime(interval)
+    }
+
+    /// When `formatWaitTime` next changes for a ping received at `start`: every second for
+    /// the first minute, then on the ping's own minute boundaries, so "1m" lands at 60s
+    /// exactly and an old row redraws once a minute rather than once a second.
+    static func nextWaitTimeChange(after date: Date, since start: Date) -> Date {
+        let elapsed = max(0, date.timeIntervalSince(start))
+        let step: TimeInterval = elapsed < 59 ? 1 : 60
+        return start.addingTimeInterval((floor(elapsed / step) + 1) * step)
     }
 
     static func formatElapsedTimeAccessible(_ interval: TimeInterval) -> String {
