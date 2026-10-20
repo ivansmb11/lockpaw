@@ -130,6 +130,7 @@ struct LockScreenView: View {
                         .animation(Constants.Anim.gentle, value: controller.unlockSucceeded)
                         .animation(Constants.Anim.standard, value: controller.lastError)
                         .allowsHitTesting(false)
+                        .legibleOverWallpaper(!drawsBackdrop)
 
                         // Time
                         TimelineView(.periodic(from: .now, by: 1)) { _ in
@@ -142,6 +143,7 @@ struct LockScreenView: View {
                         .opacity(appeared ? 1 : 0)
                         .opacity(controller.isAuthenticating || controller.unlockSucceeded ? 0.15 : 1)
                         .allowsHitTesting(false)
+                        .legibleOverWallpaper(!drawsBackdrop)
 
                         // Who is waiting — a row per session; stays until
                         // unlock. Always mounted (empty until the first ping) and faded by
@@ -155,6 +157,7 @@ struct LockScreenView: View {
                             .animation(Constants.Anim.gentle, value: controller.agentPings)
                             .animation(Constants.Anim.gentle, value: controller.unlockSucceeded)
                             .animation(Constants.Anim.gentle, value: controller.isAuthenticating)
+                            .legibleOverWallpaper(!drawsBackdrop)
                     }
 
                     Spacer()
@@ -215,6 +218,7 @@ struct LockScreenView: View {
                         }
                     }
                     .frame(height: 120)
+                    .legibleOverWallpaper(!drawsBackdrop)
                     .padding(.bottom, compact ? 16 : 40)
                     .animation(Constants.Anim.gentle, value: controller.isAuthenticating)
                     .animation(Constants.Anim.gentle, value: controller.unlockSucceeded)
@@ -418,5 +422,19 @@ private struct LockPasswordField: View {
         let typed = password
         password = ""
         controller.submitPassword(typed)
+    }
+}
+
+private extension View {
+    /// Over a wallpaper the text has no dark ground of its own, and busy texture eats
+    /// thin type at these opacities. A soft shadow separates it, as on the macOS lock
+    /// screen. Off over Lockpaw's own backdrop, which is already near-black.
+    @ViewBuilder
+    func legibleOverWallpaper(_ enabled: Bool) -> some View {
+        if enabled {
+            shadow(color: .black.opacity(0.6), radius: 6, x: 0, y: 1)
+        } else {
+            self
+        }
     }
 }
