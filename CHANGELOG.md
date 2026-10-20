@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.3] - 2026-10-20
+
+### Fixed
+
+- Touch ID stopped unlocking a lock that had been up long enough for the display to sleep and macOS to lock, leaving only the password. The macOS lock screen was mistaken for a reason to switch Touch ID off for the rest of the lock. It now stays on, and it comes back after every wake and macOS unlock.
+
 ## [1.6.2] - 2026-10-20
 
 ### Added

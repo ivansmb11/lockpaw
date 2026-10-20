@@ -60,6 +60,19 @@ enum PassiveAuthPolicy {
         return now.timeIntervalSince(lastFailure) >= cooldown
     }
 
+    /// Whether secure input coming up while the sensor is armed should be pinned on the
+    /// arming. The macOS lock screen's password field turns secure input on as well, so a
+    /// display sleep that locks macOS looked exactly like arming having flipped it — and
+    /// stood Touch ID down for the rest of a long lock. While macOS is locked the flip is
+    /// the login window's, not ours.
+    static func secureInputBlamesArming(
+        secureInputBeforeArm: Bool,
+        secureInputNow: Bool,
+        systemScreenLocked: Bool
+    ) -> Bool {
+        !secureInputBeforeArm && secureInputNow && !systemScreenLocked
+    }
+
     static func outcome(_ result: PassiveAuthResult) -> PassiveAuthOutcome {
         if result.authenticated { return .unlock }
 
