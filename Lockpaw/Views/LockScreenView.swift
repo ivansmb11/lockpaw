@@ -191,17 +191,18 @@ struct LockScreenView: View {
                                         .font(.lockLabel)
                                         .foregroundStyle(.white.opacity(hoveringAuth ? 0.6 : 0.4))
                                         .tracking(0.3)
-                                        .frame(minHeight: 44)
-                                        .padding(.horizontal, 20)
+                                        // The field's size and shape, so opening it swaps
+                                        // the contents and nothing else moves.
+                                        .frame(width: LockPasswordField.size.width, height: LockPasswordField.size.height)
                                         .background(
-                                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            Capsule(style: .continuous)
                                                 .fill(.ultraThinMaterial.opacity(hoveringAuth ? 0.5 : 0.3))
                                         )
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            Capsule(style: .continuous)
                                                 .strokeBorder(.white.opacity(hoveringAuth ? 0.08 : 0.04), lineWidth: 0.5)
                                         )
-                                        .contentShape(Rectangle())
+                                        .contentShape(Capsule())
                                 }
                                 .buttonStyle(.plain)
                                 .onHover { hoveringAuth = $0 }
@@ -332,6 +333,9 @@ struct LockScreenView: View {
 /// level. Kiosk mode, not the input tap, guards the keyboard while this is focused; see
 /// `PasswordEntryPolicy`.
 private struct LockPasswordField: View {
+    /// Shared with the Use Password button it replaces.
+    static let size = CGSize(width: 220, height: 32)
+
     @ObservedObject var controller: LockController
     @State private var password = ""
     @FocusState private var focused: Bool
@@ -343,49 +347,67 @@ private struct LockPasswordField: View {
                 .foregroundStyle(.white.opacity(0.35))
                 .tracking(0.5)
 
-            // Drawn as an overlay, not as the field's prompt: macOS ignores a prompt's color
-            // and uses its own placeholder grey, which on this background reads as typed text.
-            SecureField(text: $password, prompt: Text("")) {
-                Text("Password")
-            }
-                .overlay {
-                    if password.isEmpty {
-                        Text("Password")
-                            .foregroundStyle(.white.opacity(0.25))
-                            .allowsHitTesting(false)
+            // A pill like the macOS login field: text starts at the leading edge, so the
+            // caret sits before the placeholder instead of blinking through the middle of it.
+            HStack(spacing: 6) {
+                // The placeholder is an overlay, not the field's prompt: macOS ignores a
+                // prompt's color and uses its own grey, which here reads as typed text.
+                SecureField(text: $password, prompt: Text("")) {
+                    Text("Password")
+                }
+                    .overlay(alignment: .leading) {
+                        if password.isEmpty {
+                            Text("Password")
+                                .font(.lockCaption)
+                                .foregroundStyle(.white.opacity(0.3))
+                                .allowsHitTesting(false)
+                        }
                     }
+                    .textFieldStyle(.plain)
+                    .font(.lockLabel)
+                    .foregroundStyle(.white.opacity(0.8))
+                    .focused($focused)
+                    .onSubmit(submit)
+                    .onExitCommand {
+                        password = ""
+                        controller.cancelPasswordEntry()
+                    }
+                    .onChange(of: password) { _, _ in controller.notePasswordActivity() }
+                    .accessibilityLabel("Mac password")
+
+                Button(action: submit) {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.white.opacity(0.45))
                 }
-                .textFieldStyle(.plain)
-                .font(.lockLabel)
-                .foregroundStyle(.white.opacity(0.8))
-                .multilineTextAlignment(.center)
-                .frame(width: 220, height: 44)
-                .padding(.horizontal, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(.ultraThinMaterial.opacity(0.5))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
-                )
-                .focused($focused)
-                .onSubmit {
-                    let typed = password
-                    password = ""
-                    controller.submitPassword(typed)
-                }
-                .onExitCommand {
-                    password = ""
-                    controller.cancelPasswordEntry()
-                }
-                .onChange(of: password) { _, _ in controller.notePasswordActivity() }
-                .accessibilityLabel("Mac password")
+                    .buttonStyle(.plain)
+                    .disabled(password.isEmpty)
+                    .opacity(password.isEmpty ? 0 : 1)
+                    .animation(Constants.Anim.gentle, value: password.isEmpty)
+                    .accessibilityLabel("Unlock")
+            }
+            .padding(.leading, 14)
+            .padding(.trailing, 7)
+            .frame(width: Self.size.width, height: Self.size.height)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(.ultraThinMaterial.opacity(0.5))
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .strokeBorder(.white.opacity(0.08), lineWidth: 0.5)
+            )
         }
         .onAppear {
             // Kiosk mode activates the app in the same turn that mounts this view; focus
             // once that activation has landed and the overlay is key.
             DispatchQueue.main.async { focused = true }
         }
+    }
+
+    private func submit() {
+        let typed = password
+        password = ""
+        controller.submitPassword(typed)
     }
 }
