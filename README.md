@@ -67,8 +67,8 @@ the locked screen **glows from across the room** and a notification fires. You s
 covered (and private) until *you* unlock. The glow is always silent; turn on a sound in
 **Settings → Agents** if you want one (off by default for shared offices).
 
-The lock screen says who is waiting: one quiet line per session — *Claude Code 2m*,
-*Codex 12m* — with a dot that's amber while it needs you, teal once it's done, and red
+The lock screen says who is waiting, one quiet line per session: *Claude Code 2m*,
+*Codex 12m*. Each has a dot that's amber while it needs you, teal once it's done, and red
 on an error. Project names stay off the lock screen, since
 anyone walking past can read it; turn them on in **Settings → Agents**. The notification
 always names the project: *Claude Code needs permission in my-app.* The glow is teal when
