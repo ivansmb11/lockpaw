@@ -1,6 +1,6 @@
 # Security Policy
 
-Lockpaw is a screen guard — it blocks input and covers your displays, but it is **not** a replacement for the macOS lock screen and does not protect against someone with physical access to an unlocked user session (no FileVault-level protection, no protection against `ssh` access or closing the app from another session). Please keep that threat model in mind when assessing impact.
+Lockpaw is a screen guard. It blocks input and covers your displays, but it is **not** a replacement for the macOS lock screen and does not protect against someone with physical access to an unlocked user session (no FileVault-level protection, no protection against `ssh` access or closing the app from another session). Please keep that threat model in mind when assessing impact.
 
 ## Supported versions
 
@@ -10,7 +10,7 @@ Only the latest release receives security fixes. Update via Sparkle (Settings �
 
 Please **do not** open a public issue for security problems.
 
-Use [GitHub private vulnerability reporting](https://github.com/sorkila/lockpaw/security/advisories/new) — it goes straight to the maintainer and stays private until a fix ships.
+Use [GitHub private vulnerability reporting](https://github.com/sorkila/lockpaw/security/advisories/new). It goes straight to the maintainer and stays private until a fix ships.
 
 You can expect an initial response within a few days. If the report is valid, a fix will be released as soon as practical and you'll be credited in the release notes (unless you prefer otherwise).
 
@@ -18,8 +18,8 @@ You can expect an initial response within a few days. If the report is valid, a 
 
 Reports especially welcome for:
 
-- Lock bypass — interacting with apps/system while Lockpaw is locked (input not blocked, overlay dismissible, etc.)
-- Authentication bypass — unlocking without the hotkey or Touch ID/password
+- Lock bypass: interacting with apps/system while Lockpaw is locked (input not blocked, overlay dismissible, etc.)
+- Authentication bypass: unlocking without the hotkey or Touch ID/password
 - Anything that makes the `lockpaw` CLI or its agent hooks execute unintended commands
 - The lid-closed helper (below)
 
@@ -34,4 +34,4 @@ What it can do, and what limits it:
 - **Sleep always comes back.** The helper clears `disablesleep` when it starts (at boot), when it is stopped (shutdown, or turning the setting off, which unregisters it), and a minute after the app disconnects while sleep is held (crash, force quit). The app asks for the block only while the screen is locked, and lets go when the Mac runs hot (`thermalState` serious or worse) or the battery reaches 20%.
 - **Removal.** Turn off "Stay awake with the lid closed" in Settings, or remove Lockpaw in Login Items.
 
-Issues in the helper — a way to reach it from another process, to run it against a non-Lockpaw caller, or a path that leaves sleep disabled — are in scope and welcome.
+Issues in the helper are in scope and welcome: a way to reach it from another process, to run it against a non-Lockpaw caller, or a path that leaves sleep disabled.

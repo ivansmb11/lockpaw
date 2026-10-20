@@ -245,7 +245,7 @@ struct SettingsView: View {
 
                     SettingsRow(
                         "Supporter mascots",
-                        subtitle: supporter.isSupporter ? "A thank-you for supporting Lockpaw." : "A thank-you for supporters \u{2014} see About."
+                        subtitle: supporter.isSupporter ? "A thank-you for supporting Lockpaw." : "A thank-you for supporters. See About."
                     ) {
                         SettingsSegmentedControl(
                             selection: $selectedMascot,
@@ -588,7 +588,7 @@ struct SettingsView: View {
     private func runAgentSetup(_ arguments: [String], mark: String, treatWarningAsFailure: Bool = true) {
         if case .running = agentSetupResults[mark] { return }
         guard let cli = cliURL, FileManager.default.isExecutableFile(atPath: cli.path) else {
-            agentSetupResults[mark] = .failure("The bundled lockpaw tool is missing — reinstall Lockpaw.")
+            agentSetupResults[mark] = .failure("The bundled lockpaw tool is missing. Reinstall Lockpaw.")
             return
         }
         agentSetupResults[mark] = .running
@@ -775,7 +775,7 @@ struct SettingsView: View {
 
                 SettingsDivider()
 
-                SettingsRow("Connect your agent", subtitle: "One click sets up everything — the command-line tool and the agent's ping hook (a .bak backup is kept). Codex: afterwards, run /hooks in Codex and trust the Lockpaw hook, so the screen turns amber while it waits for your approval.") {
+                SettingsRow("Connect your agent", subtitle: "One click installs the command-line tool and the agent's ping hook, and keeps a .bak backup of its config. For Codex, afterwards run /hooks in Codex and trust the Lockpaw hook, so the screen turns amber while it waits for your approval.") {
                     VStack(alignment: .trailing, spacing: 8) {
                         ForEach([["claude", "codex", "gemini"], ["cursor", "copilot", "aider"]], id: \.self) { row in
                             HStack(spacing: 8) {
@@ -795,7 +795,7 @@ struct SettingsView: View {
 
                 SettingsDivider()
 
-                SettingsRow("Command-line tool", subtitle: "Optional — connecting an agent installs this automatically. Puts lockpaw in ~/.local/bin for your own scripts.") {
+                SettingsRow("Command-line tool", subtitle: "Optional, since connecting an agent installs it too. Puts lockpaw in ~/.local/bin for your own scripts.") {
                     Button {
                         runAgentSetup(["install-cli"], mark: "cli", treatWarningAsFailure: false)
                     } label: {
@@ -1319,7 +1319,7 @@ private struct RelaySettingsPanel: View {
                 SettingsDivider()
                 field("Server", text: $ntfyServer, secret: .ntfyServer, prompt: "https://ntfy.sh")
                 SettingsDivider()
-                field("Topic", subtitle: "Subscribe to this topic in the ntfy app. It was generated at random \u{2014} on a public server the name is the password.", text: $ntfyTopic, secret: .ntfyTopic, prompt: "lockpaw-\u{2026}")
+                field("Topic", subtitle: "Subscribe to this topic in the ntfy app. It was generated at random. On a public server, the name is the password.", text: $ntfyTopic, secret: .ntfyTopic, prompt: "lockpaw-\u{2026}")
                 SettingsDivider()
                 field("Access token", subtitle: "Only for servers that require one.", text: $ntfyToken, secret: .ntfyToken, prompt: "optional", isSecure: true)
             case .pushover:
