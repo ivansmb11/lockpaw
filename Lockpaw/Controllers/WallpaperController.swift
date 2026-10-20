@@ -2,6 +2,9 @@ import AppKit
 import AVFoundation
 import ImageIO
 import IOKit.ps
+import os.log
+
+private let logger = Logger(subsystem: "com.eriknielsen.lockpaw", category: "Wallpaper")
 
 /// What a screen's wallpaper background shows. Built once per screen at lock time;
 /// the view only reads it.
@@ -36,12 +39,21 @@ final class WallpaperClip {
     private let looper: AVPlayerLooper
     private(set) var visibleLayers = 0
     fileprivate var onVisibilityChange: (() -> Void)?
+    /// The asset ID (the file's name), for logs. Never the path: it carries the username.
+    let name: String
+    private var statusObservation: NSKeyValueObservation?
 
     init(url: URL) {
+        name = url.deletingPathExtension().lastPathComponent
         looper = AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
         player.isMuted = true
         // SleepPreventer owns display sleep for the lock, not the player.
         player.preventsDisplaySleepDuringVideoPlayback = false
+        statusObservation = looper.observe(\.status, options: [.new]) { [name] looper, _ in
+            if looper.status == .failed {
+                logger.error("clip \(name, privacy: .public) failed: \(looper.error?.localizedDescription ?? "unknown", privacy: .public)")
+            }
+        }
     }
 
     func layerAppeared() {
@@ -109,10 +121,14 @@ final class WallpaperController {
         let screen = screens[index]
         switch DesktopWallpaper.current(for: screen, indexPlist: indexPlist, managedSpaces: managedSpaces) {
         case .video(let url):
-            return .clip(clip(url))
+            let clip = clip(url)
+            logger.info("screen \(index): Aerial \(clip.name, privacy: .public)")
+            return .clip(clip)
         case .image(let url):
+            logger.info("screen \(index): still")
             return .still(still(url, for: screen))
         case nil:
+            logger.info("screen \(index): no wallpaper")
             return nil
         }
     }
@@ -157,10 +173,12 @@ final class WallpaperController {
         let onBattery = Self.isOnBattery
         let lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
         for clip in clips.values {
-            clip.setPlaying(WallpaperPlaybackPolicy.shouldPlay(.init(
+            let play = WallpaperPlaybackPolicy.shouldPlay(.init(
                 motion: motion, reduceMotion: reduceMotion, onBattery: onBattery,
                 lowPowerMode: lowPower, visibleLayers: clip.visibleLayers
-            )))
+            ))
+            logger.info("clip \(clip.name, privacy: .public): play=\(play) layers=\(clip.visibleLayers) motion=\(self.motion.rawValue, privacy: .public) battery=\(onBattery) lowPower=\(lowPower) reduceMotion=\(self.reduceMotion)")
+            clip.setPlaying(play)
         }
     }
 
