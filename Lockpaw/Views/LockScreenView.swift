@@ -140,7 +140,7 @@ struct LockScreenView: View {
                         .opacity(controller.isAuthenticating || controller.unlockSucceeded ? 0.15 : 1)
                         .allowsHitTesting(false)
 
-                        // Who is waiting — tally, then a row per session; stays until
+                        // Who is waiting — a row per session; stays until
                         // unlock. Always mounted (empty until the first ping) and faded by
                         // explicit opacity: removal transitions hard-cut in the overlay on
                         // macOS 26. The animations are scoped to the list so a ping never

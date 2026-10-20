@@ -1,10 +1,9 @@
 import SwiftUI
 
 /// The agents waiting on the user — the standing companion to the glow pulses, shown
-/// until unlock. A tally first, readable at a glance ("1 waiting · 2 done", once more than
-/// one session has pinged), then one row per session: agent, state, wait time. Rows are
-/// urgent first and capped so a busy afternoon cannot push the unlock prompt off a small
-/// screen; the tally still counts everyone.
+/// until unlock. One quiet line per session: a dot whose colour is the state, who, and
+/// how long ago. The glow already says how urgent; these only say who. Rows are urgent
+/// first and capped so a busy afternoon cannot push the unlock prompt off a small screen.
 ///
 /// No project names unless the user opts in (`Constants.lockScreenShowsProjectsKey`):
 /// anyone walking past can read a lock screen. Notifications keep the project.
@@ -17,65 +16,40 @@ struct AgentPingList: View {
     static let maxRows = 3
 
     var body: some View {
-        VStack(spacing: 10) {
-            if queue.pings.count > 1 {
-                tally
-            }
-            VStack(spacing: 6) {
+        VStack(spacing: 8) {
+            Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 6) {
                 ForEach(queue.rows.prefix(Self.maxRows)) { ping in
                     row(ping)
                 }
-                if queue.pings.count > Self.maxRows {
-                    Text("and \(queue.pings.count - Self.maxRows) more")
-                        .font(.lockCaption)
-                        .foregroundStyle(.white.opacity(0.25))
-                        .tracking(0.5)
-                }
+            }
+            if queue.pings.count > Self.maxRows {
+                Text("and \(queue.pings.count - Self.maxRows) more")
+                    .font(.lockCaption)
+                    .foregroundStyle(.white.opacity(0.25))
+                    .tracking(0.5)
             }
         }
         .allowsHitTesting(false)
     }
 
-    /// Label-sized and brighter than the rows; only an error carries a marker, the small
-    /// red dot that separates it from a session waiting on the user.
-    private var tally: some View {
-        HStack(spacing: 6) {
-            ForEach(Array(queue.tally.enumerated()), id: \.element.id) { index, entry in
-                if index > 0 {
-                    Text("\u{00B7}")
-                        .foregroundStyle(.white.opacity(0.25))
-                }
-                if entry.status == .error {
-                    marker(.error)
-                }
-                Text(entry.label)
-                    .foregroundStyle(.white.opacity(0.55))
-            }
-        }
-        .font(.lockLabel)
-        .tracking(0.3)
-        .lineLimit(1)
-        .accessibilityElement(children: .combine)
-    }
-
+    /// The state lives in the dot, so VoiceOver gets the words the row leaves out.
     private func row(_ ping: AgentPing) -> some View {
-        HStack(spacing: 6) {
+        GridRow {
             marker(ping.kind.status)
-            Text(ping.summary(includingProject: showsProjects))
+            Text(ping.name(includingProject: showsProjects))
                 .font(.lockCaption)
                 .foregroundStyle(.white.opacity(0.4))
-            Text("\u{00B7}")
-                .font(.lockCaption)
-                .foregroundStyle(.white.opacity(0.25))
-            TimelineView(.periodic(from: .now, by: 30)) { context in
+            TimelineView(WaitTimeSchedule(start: ping.receivedAt)) { context in
                 Text(Constants.formatWaitTime(context.date.timeIntervalSince(ping.receivedAt)))
                     .font(.lockMono)
                     .foregroundStyle(.white.opacity(0.3))
             }
+            .gridColumnAlignment(.trailing)
         }
         .tracking(0.5)
         .lineLimit(1)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(ping.summary(includingProject: showsProjects))
     }
 
     private func marker(_ status: AgentPingStatus) -> some View {
@@ -83,6 +57,20 @@ struct AgentPingList: View {
             .fill(status.dotColor)
             .frame(width: 5, height: 5)
             .opacity(0.55 + breathe * 0.3)
+    }
+}
+
+/// Redraws a row's wait time only when its text changes (`Constants.nextWaitTimeChange`).
+private struct WaitTimeSchedule: TimelineSchedule {
+    let start: Date
+
+    func entries(from startDate: Date, mode: TimelineScheduleMode) -> AnyIterator<Date> {
+        var next: Date?
+        return AnyIterator {
+            let date = next.map { Constants.nextWaitTimeChange(after: $0, since: start) } ?? startDate
+            next = date
+            return date
+        }
     }
 }
 

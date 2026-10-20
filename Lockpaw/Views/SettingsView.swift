@@ -758,7 +758,7 @@ struct SettingsView: View {
 
                 SettingsDivider()
 
-                SettingsRow("Show project names on the lock screen", subtitle: "Off: \u{201C}Claude Code finished\u{201D}. On: \u{201C}Claude Code finished in web-app\u{201D}. Notifications always name it.") {
+                SettingsRow("Show project names on the lock screen", subtitle: "Off: \u{201C}Claude Code\u{201D}. On: \u{201C}Claude Code \u{00B7} web-app\u{201D}. Notifications always name it.") {
                     SettingsCheckbox(isOn: $lockScreenShowsProjects)
                 }
 

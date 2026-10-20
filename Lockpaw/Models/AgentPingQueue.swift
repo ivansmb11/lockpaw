@@ -1,6 +1,6 @@
 import Foundation
 
-/// What a ping means on the lock screen, grouped the way the tally counts it.
+/// What a ping means on the lock screen: the colour of its row's dot.
 enum AgentPingStatus: CaseIterable, Equatable {
     case waiting
     case error
@@ -15,18 +15,8 @@ enum AgentPingStatus: CaseIterable, Equatable {
 
     /// The glow's colour. Errors glow amber, not red: red is for auth failure and danger,
     /// and a red full-screen bloom on a lock screen reads as an intrusion. The red marker
-    /// on the row and in the tally carries the difference.
+    /// on the row carries the difference.
     var glowTone: AgentGlowTone { isUrgent ? .amber : .teal }
-
-    /// The tally's word for `count` sessions in this state.
-    func tallyLabel(count: Int) -> String {
-        switch self {
-        case .waiting: return "\(count) waiting"
-        case .error: return count == 1 ? "1 error" : "\(count) errors"
-        case .done: return "\(count) done"
-        case .attention: return count == 1 ? "1 needs you" : "\(count) need you"
-        }
-    }
 }
 
 /// The two colours the agent glow can take.
@@ -84,22 +74,4 @@ struct AgentPingQueue: Equatable {
         let newestFirst = pings.reversed()
         return newestFirst.filter { $0.kind.status.isUrgent } + newestFirst.filter { !$0.kind.status.isUrgent }
     }
-
-    /// Sessions per state, in `AgentPingStatus` order (urgent first, like the rows), zero
-    /// counts left out: "1 waiting · 2 done".
-    var tally: [AgentPingTally] {
-        AgentPingStatus.allCases.compactMap { status in
-            let count = pings.filter { $0.kind.status == status }.count
-            return count > 0 ? AgentPingTally(status: status, count: count) : nil
-        }
-    }
-}
-
-/// One segment of the lock screen's tally.
-struct AgentPingTally: Equatable, Identifiable {
-    let status: AgentPingStatus
-    let count: Int
-
-    var id: AgentPingStatus { status }
-    var label: String { status.tallyLabel(count: count) }
 }

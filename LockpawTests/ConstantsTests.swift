@@ -28,11 +28,26 @@ final class ConstantsTests: XCTestCase {
     // MARK: - formatWaitTime
 
     func testFormatWaitTime() {
-        XCTAssertEqual(Constants.formatWaitTime(0), "now")
-        XCTAssertEqual(Constants.formatWaitTime(59), "now")
+        XCTAssertEqual(Constants.formatWaitTime(-1), "0s")
+        XCTAssertEqual(Constants.formatWaitTime(0), "0s")
+        XCTAssertEqual(Constants.formatWaitTime(59.9), "59s")
         XCTAssertEqual(Constants.formatWaitTime(60), "1m")
         XCTAssertEqual(Constants.formatWaitTime(3599), "59m")
         XCTAssertEqual(Constants.formatWaitTime(3660), "1h 01m")
+    }
+
+    func testWaitTimeTicksEverySecondThenOnTheMinute() {
+        let start = Date(timeIntervalSince1970: 1_000)
+        func next(_ elapsed: TimeInterval) -> TimeInterval {
+            Constants.nextWaitTimeChange(after: start.addingTimeInterval(elapsed), since: start)
+                .timeIntervalSince(start)
+        }
+        XCTAssertEqual(next(0), 1)
+        XCTAssertEqual(next(0.4), 1)
+        XCTAssertEqual(next(58.5), 59)
+        XCTAssertEqual(next(59), 60)
+        XCTAssertEqual(next(60), 120)
+        XCTAssertEqual(next(150), 180)
     }
 
     // MARK: - formatElapsedTimeAccessible

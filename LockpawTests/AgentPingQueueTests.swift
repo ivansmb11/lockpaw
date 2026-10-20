@@ -20,7 +20,6 @@ final class AgentPingQueueTests: XCTestCase {
         XCTAssertNil(queue.latest)
         XCTAssertNil(queue.glowPing)
         XCTAssertEqual(queue.glowTone, .teal)
-        XCTAssertTrue(queue.tally.isEmpty)
     }
 
     func testDifferentSessionsEachGetARow_oldestFirst() {
@@ -136,7 +135,7 @@ final class AgentPingQueueTests: XCTestCase {
         }
     }
 
-    // MARK: - Rows and tally
+    // MARK: - Rows
 
     func testRowsPutUrgentFirst_newestFirstWithin() {
         var queue = AgentPingQueue()
@@ -148,24 +147,12 @@ final class AgentPingQueueTests: XCTestCase {
         XCTAssertEqual(queue.rows.map(\.sessionID), ["c", "a", "d", "b"])
     }
 
-    func testTallyCountsSessionsPerStateInAFixedOrder() {
-        var queue = AgentPingQueue()
-        queue.record(ping(.finished, session: "a"))
-        queue.record(ping(.finished, session: "b"))
-        queue.record(ping(.permission, session: "c"))
-        queue.record(ping(.rateLimited, session: "d"))
+    func testRowNameSaysWhoNotWhat_projectOnlyWhenAsked() {
+        let named = AgentPing(agent: "Claude Code", project: "api-server", kind: .permission, sessionID: "a", receivedAt: Date())
+        XCTAssertEqual(named.name(includingProject: false), "Claude Code")
+        XCTAssertEqual(named.name(includingProject: true), "Claude Code \u{00B7} api-server")
 
-        XCTAssertEqual(queue.tally.map { $0.status }, [.waiting, .error, .done])
-        XCTAssertEqual(queue.tally.map { $0.count }, [1, 1, 2])
-        XCTAssertEqual(queue.tally.map(\.label), ["1 waiting", "1 error", "2 done"])
-    }
-
-    func testTallyLabels() {
-        XCTAssertEqual(AgentPingStatus.done.tallyLabel(count: 3), "3 done")
-        XCTAssertEqual(AgentPingStatus.waiting.tallyLabel(count: 2), "2 waiting")
-        XCTAssertEqual(AgentPingStatus.error.tallyLabel(count: 1), "1 error")
-        XCTAssertEqual(AgentPingStatus.error.tallyLabel(count: 2), "2 errors")
-        XCTAssertEqual(AgentPingStatus.attention.tallyLabel(count: 1), "1 needs you")
-        XCTAssertEqual(AgentPingStatus.attention.tallyLabel(count: 2), "2 need you")
+        let bare = AgentPing(agent: nil, project: nil, kind: .attention, sessionID: nil, receivedAt: Date())
+        XCTAssertEqual(bare.name(includingProject: true), "Your agent")
     }
 }

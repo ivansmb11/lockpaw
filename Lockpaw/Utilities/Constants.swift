@@ -92,13 +92,22 @@ enum Constants {
         return String(format: "%ds", seconds)
     }
 
-    /// Coarse age of an agent ping. Minute resolution: the row only has to say
-    /// roughly how long the agent has been waiting.
+    /// Age of an agent ping: seconds for the first minute, so a fresh row visibly counts
+    /// up, then minutes — the row only has to say roughly how long the agent has waited.
     static func formatWaitTime(_ interval: TimeInterval) -> String {
-        let minutes = Int(interval) / 60
-        if minutes < 1 { return "now" }
-        if minutes < 60 { return "\(minutes)m" }
+        let seconds = max(0, Int(interval))
+        if seconds < 60 { return "\(seconds)s" }
+        if seconds < 3600 { return "\(seconds / 60)m" }
         return formatElapsedTime(interval)
+    }
+
+    /// When `formatWaitTime` next changes for a ping received at `start`: every second for
+    /// the first minute, then on the ping's own minute boundaries, so "1m" lands at 60s
+    /// exactly and an old row redraws once a minute rather than once a second.
+    static func nextWaitTimeChange(after date: Date, since start: Date) -> Date {
+        let elapsed = max(0, date.timeIntervalSince(start))
+        let step: TimeInterval = elapsed < 59 ? 1 : 60
+        return start.addingTimeInterval((floor(elapsed / step) + 1) * step)
     }
 
     static func formatElapsedTimeAccessible(_ interval: TimeInterval) -> String {

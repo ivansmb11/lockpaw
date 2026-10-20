@@ -69,13 +69,22 @@ struct AgentPing: Equatable, Identifiable {
         return "\(agent ?? "")|\(project ?? "")"
     }
 
-    /// What the notification and the lock screen say. Project names are opt-in on the
-    /// lock screen (anyone walking past can read it), so callers choose.
+    /// What the notification says, and what VoiceOver reads for a lock-screen row.
+    /// Project names are opt-in on the lock screen (anyone walking past can read it), so
+    /// callers choose.
     func summary(includingProject: Bool = true) -> String {
-        let subject = agent ?? "Your agent"
         guard includingProject, let project else { return "\(subject) \(kind.verb)" }
         return "\(subject) \(kind.verb) in \(project)"
     }
+
+    /// A lock-screen row's text: who, and nothing about what. The row's dot carries the
+    /// state and the glow the urgency, so the words stay short.
+    func name(includingProject: Bool) -> String {
+        guard includingProject, let project else { return subject }
+        return "\(subject) \u{00B7} \(project)"
+    }
+
+    private var subject: String { agent ?? "Your agent" }
 
     static func from(userInfo: [AnyHashable: Any]?, now: Date = Date()) -> AgentPing {
         let field = { (key: String) -> String? in
