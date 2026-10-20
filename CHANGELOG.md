@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.4] - 2026-10-20
+
+### Fixed
+
+- Touch ID could stop listening partway through a lock when another app came to the front behind the cover (an agent opening a browser, an updater, a background helper). The sensor went quiet without telling Lockpaw, so a touch locked macOS instead of unlocking. Lockpaw now notices and re-arms Touch ID within a second.
+
 ## [1.6.3] - 2026-10-20
 
 ### Fixed
