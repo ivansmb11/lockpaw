@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.6.2] - 2026-10-20
 
 ### Added
 
@@ -8,6 +8,15 @@
 - The glow says **how urgent**: amber while any agent is blocked on you or stopped on an error, teal when they're all done. A later "done" never repaints a waiting glow teal, and the colour now fades instead of snapping. Errors get a red dot on their line rather than a red screen.
 - **Show project names on the lock screen** (Settings → Agents, off by default). Anyone walking past can read a lock screen, so its lines leave the project out unless you turn this on. Notifications always name it.
 - **Desktop wallpaper behind the lock screen** (Settings → Lock Screen, off by default), Aerials included. Each display shows its own wallpaper for the Space it's on. Screens showing the same Aerial share one video player, and **Aerials move** picks when it plays: Always, Plugged in (the default; it holds still on battery and in Low Power Mode) or Never. Under Reduce Motion, and whenever it's paused, the Aerial holds its current frame. A dim keeps the lock screen's text and the ping glow readable over bright wallpapers. Asked for in #20 and contributed in #21 by @zazdrew.
+
+### Changed
+
+- The password field is a pill like the macOS login field: what you type starts at the left, so the cursor no longer blinks through the placeholder. **Use Password** is the same size, so opening the field moves nothing.
+
+### Fixed
+
+- The hotkey could stop working after the Mac slept, after a macOS unlock, or after switching users, until Lockpaw was relaunched. The hotkey is now rebuilt after each of those (#29).
+- Holding the lock hotkey could leave the keyboard blocked with no lock screen showing, until the hotkey was pressed again. Contributed by @mostafa20021212 (#34).
 
 ## [1.6.1] - 2026-10-15
 
