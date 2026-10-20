@@ -222,6 +222,10 @@ struct LockScreenView: View {
                     .offset(x: shakeOffset)
                 }
             }
+            // GeometryReader pins its child top-leading. The backdrop used to make this
+            // stack full-width; over a wallpaper there is no backdrop, and the stack shrank
+            // to the content column and sat against the left edge.
+            .frame(width: geo.size.width, height: geo.size.height)
             .accessibilityElement(children: .contain)
             .accessibilityAddTraits(.isModal)
         }
