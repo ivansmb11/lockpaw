@@ -606,9 +606,15 @@ class LockController: ObservableObject {
     /// under us, so re-sample availability before arming again.
     private func armPassiveAuthAfterInterruption() {
         // Tear the interrupted evaluation down explicitly. `armPassiveAuth` only disarms
-        // once it has decided to arm, so a refusal here (suspended, rate-limited) must not
-        // leave a stale context armed behind the overlay.
+        // once it has decided to arm, so a refusal here (rate-limited) must not leave a
+        // stale context armed behind the overlay.
         disarmPassiveAuth()
+        // A stand-down is "stable for this lock session", but a wake, a macOS unlock or a
+        // user switch is a fresh start: whatever ended the old evaluation (the macOS lock
+        // cancelling it, the sensor gone while the display slept) may be over. Leaving the
+        // latch set meant a long lock came back with Touch ID dead until the next lock.
+        // One arm per interruption cannot spin, and a real lockout just stands down again.
+        passiveAuthSuspended = false
         biometryAvailable = authenticator.isBiometryAvailable
         armPassiveAuth()
     }
@@ -683,7 +689,11 @@ class LockController: ObservableObject {
             // password sheet, but one early sample is the shape that fails worst: a later
             // flip on a slower machine or a future OS would go unnoticed for the whole
             // session with no recovery. So keep looking for as long as we stay armed.
-            if !secureInputBeforeArm, IsSecureEventInputEnabled() {
+            if PassiveAuthPolicy.secureInputBlamesArming(
+                secureInputBeforeArm: secureInputBeforeArm,
+                secureInputNow: IsSecureEventInputEnabled(),
+                systemScreenLocked: SystemSession.isScreenLocked
+            ) {
                 logger.warning("Secure input came up while Touch ID was armed — standing down, hotkey unlock takes priority")
                 passiveAuthSuspended = true
                 disarmPassiveAuth(endingSession: true)

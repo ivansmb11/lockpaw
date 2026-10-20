@@ -47,7 +47,7 @@ final class PassiveAuthTests: XCTestCase {
         XCTAssertFalse(shouldArm(biometryAvailable: false))
     }
 
-    // MARK: - Suspension (stand-down latch, cleared by the next lock)
+    // MARK: - Suspension (stand-down latch, cleared by the next lock or an interruption)
 
     func testSuspended_doesNotArm() {
         XCTAssertFalse(shouldArm(suspended: true))
@@ -95,6 +95,30 @@ final class PassiveAuthTests: XCTestCase {
                       suspended: true, failCount: maxAttempts),
             "an armable rate-limit state must not resurrect arming on its own"
         )
+    }
+
+    // MARK: - Secure input: only blamed on arming while macOS itself is unlocked
+
+    func testSecureInputFlipWhileArmed_blamesArming() {
+        XCTAssertTrue(PassiveAuthPolicy.secureInputBlamesArming(
+            secureInputBeforeArm: false, secureInputNow: true, systemScreenLocked: false))
+    }
+
+    /// The macOS lock screen's password field turns secure input on. A display sleep that
+    /// locks macOS mid-lock must not read as arming having flipped it, or Touch ID stands
+    /// down for the rest of a long lock and only the password gets back in.
+    func testSecureInputFromTheMacOSLockScreen_doesNotBlameArming() {
+        XCTAssertFalse(PassiveAuthPolicy.secureInputBlamesArming(
+            secureInputBeforeArm: false, secureInputNow: true, systemScreenLocked: true))
+    }
+
+    func testSecureInputAlreadyOnOrStillOff_doesNotBlameArming() {
+        for locked in [false, true] {
+            XCTAssertFalse(PassiveAuthPolicy.secureInputBlamesArming(
+                secureInputBeforeArm: true, secureInputNow: true, systemScreenLocked: locked))
+            XCTAssertFalse(PassiveAuthPolicy.secureInputBlamesArming(
+                secureInputBeforeArm: false, secureInputNow: false, systemScreenLocked: locked))
+        }
     }
 
     // MARK: - Outcome mapping
