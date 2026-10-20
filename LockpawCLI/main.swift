@@ -26,7 +26,7 @@ func homeDirectory() -> URL {
 
 func printUsage() {
     print("""
-    lockpaw — tap Lockpaw when your AI agent needs you
+    lockpaw: tap Lockpaw when your AI agent needs you
 
     USAGE:
       lockpaw ping                  Signal Lockpaw (locked screen glows + notification)
@@ -299,7 +299,7 @@ func installCodexNotify(printOnly: Bool) {
     let linkPath = homeDirectory().appendingPathComponent(".local/bin/lockpaw").path
     let line = "notify = [\"\(linkPath)\", \"ping\", \"--agent\", \"codex\"]"
     if printOnly {
-        print("Add to ~/.codex/config.toml (user-level — `notify` is ignored in project configs):\n\n  \(line)")
+        print("Add to ~/.codex/config.toml, the user-level file (Codex ignores `notify` in project configs):\n\n  \(line)")
         return
     }
 
@@ -316,7 +316,7 @@ func installCodexNotify(printOnly: Bool) {
         return
     case .foreign:
         print("""
-        ⚠️  \(url.path) already defines `notify` — leaving it untouched.
+        ⚠️  \(url.path) already defines `notify`, so it was left untouched.
         To route Codex through Lockpaw, set it to:
             \(line)
         """)
@@ -446,7 +446,7 @@ func installAiderHook(printOnly: Bool) {
         // Upgrade an older lockpaw command in place; never clobber someone else's.
         guard AgentHookConfig.isLockpawPingCommand(String(contents[existing])) else {
             print("""
-            ⚠️  \(url.path) already defines `notifications-command` — leaving it untouched.
+            ⚠️  \(url.path) already defines `notifications-command`, so it was left untouched.
             To route Aider through Lockpaw, set it to:
                 \(commandLine)
             """)

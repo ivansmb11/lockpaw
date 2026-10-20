@@ -138,7 +138,7 @@ class LockController: ObservableObject {
                         self.authenticationInProgress = false
                         self.isAuthenticating = false
                         self.transitionTo(.locked)
-                        self.lastError = "Session interrupted — try again"
+                        self.lastError = "Session interrupted. Try again"
                         self.scheduleErrorClear()
                     }
                 }

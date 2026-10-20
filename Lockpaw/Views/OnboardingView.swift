@@ -331,7 +331,7 @@ struct OnboardingView: View {
                     .lineSpacing(2)
             }
 
-            Text("Set it up anytime in Settings — works with any CLI agent.")
+            Text("Set it up anytime in Settings. It works with any CLI agent.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

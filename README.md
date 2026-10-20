@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/hero.png" alt="Lockpaw — lock your screen, agents keep working" width="840" />
+  <img src="assets/hero.png" alt="Lockpaw: lock your screen, agents keep working" width="840" />
 </p>
 
 <h1 align="center">Lockpaw</h1>
@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/demo.gif" alt="Lockpaw demo — lock the screen while your agent works, get a glow when it needs you" width="600">
+  <img src="assets/demo.gif" alt="Lockpaw demo: lock the screen while your agent works, get a glow when it needs you" width="600">
 </p>
 
 ---
@@ -62,22 +62,22 @@
 
 ## Agent alerts
 
-Lock your screen and walk away — when your AI agent pauses for permission or finishes,
+Lock your screen and walk away. When your AI agent pauses for permission or finishes,
 the locked screen **glows from across the room** and a notification fires. You stay
 covered (and private) until *you* unlock. The glow is always silent; turn on a sound in
 **Settings → Agents** if you want one (off by default for shared offices). The
 notification says who and why: *Claude Code needs permission in my-app*, *Claude Code
 finished in other-repo*.
 
-**Easiest:** open **Settings → Agents → Connect your agent** and click your agent —
-done. Prefer the terminal? Lockpaw ships a tiny `lockpaw` command-line tool
+**Easiest:** open **Settings → Agents → Connect your agent** and click your agent.
+Prefer the terminal? Lockpaw ships a tiny `lockpaw` command-line tool
 (`Lockpaw.app/Contents/SharedSupport/lockpaw`); one command wires everything up,
 including installing itself into `~/.local/bin` (add `--print` to just see the snippet):
 
 | Agent | Setup | What it hooks |
 |-------|-------|---------------|
 | **Claude Code** | `lockpaw install-hook claude` | `Notification` + `Stop` + `StopFailure` hooks in `~/.claude/settings.json` (honors `$CLAUDE_CONFIG_DIR`); `Notification` is matched to the types that need you, so `auth_success` and the like stay quiet |
-| **Codex CLI** | `lockpaw install-hook codex` | `notify` in `~/.codex/config.toml` for *finished*, plus a `PermissionRequest` hook in `~/.codex/hooks.json` for *waiting* — trust it once via `/hooks` in Codex (honors `$CODEX_HOME`) |
+| **Codex CLI** | `lockpaw install-hook codex` | `notify` in `~/.codex/config.toml` for *finished*, plus a `PermissionRequest` hook in `~/.codex/hooks.json` for *waiting*. Trust it once via `/hooks` in Codex (honors `$CODEX_HOME`) |
 | **Gemini CLI** | `lockpaw install-hook gemini` | `Notification` + `AfterAgent` hooks in `~/.gemini/settings.json` |
 | **Cursor** | `lockpaw install-hook cursor` | `stop` hook in `~/.cursor/hooks.json` (`--done`) |
 | **Copilot CLI** | `lockpaw install-hook copilot` | `agentStop` + `notification` hooks in `~/.copilot/hooks/lockpaw.json` (honors `$COPILOT_HOME`) |
@@ -90,7 +90,7 @@ upgrades older hook entries in place; existing foreign hooks are never clobbered
 a `.bak` backup is saved next to any config it touches. `lockpaw install-cli` is still
 there if you just want the command on your PATH.
 
-Under the hood, `lockpaw ping` posts a local notification that Lockpaw listens for — it
+Under the hood, `lockpaw ping` posts a local notification that Lockpaw listens for. It
 never launches the app if it isn't already running.
 
 <br>
@@ -126,33 +126,33 @@ On first launch, grant **Accessibility** when prompted. The Lockpaw icon appears
 
 The lock screen is intentionally minimal. Near-black canvas. Subtle radial glow. One element at a time.
 
-**Calm by default** — the screen opens with your chosen mascot, your message, and a quiet elapsed timer; the pointer slips away after a moment of stillness. The fallback auth button waits quietly at the bottom — always there, never loud. When an agent pings, the screen breathes two slow waves of teal, then keeps a soft "your agent needs you" hint until you return.
+**Calm by default.** The screen opens with your chosen mascot, your message, and a quiet elapsed timer; the pointer slips away after a moment of stillness. The fallback auth button waits quietly at the bottom. When an agent pings, the screen breathes two slow waves of teal, then keeps a soft "your agent needs you" hint until you return.
 
-**Mascots** — a metallic origami dog or cat rendered in teal and amber, floating in a pool of light. Slow 12-second breathing cycle. On successful unlock, the mascot scales up with a teal bloom and fades away. Or bring your own: a custom image gets a soft feathered edge so it sits in the same pool of light (transparent backgrounds look best).
+**Mascots.** A metallic origami dog or cat rendered in teal and amber, floating in a pool of light. Slow 12-second breathing cycle. On successful unlock, the mascot scales up with a teal bloom and fades away. Or bring your own: a custom image gets a soft feathered edge so it sits in the same pool of light (transparent backgrounds look best).
 
-**Typography** — system San Francisco throughout. Regular weight message at 55% white. Monospaced timer at 35%. The screen whispers.
+**Typography.** System San Francisco throughout. Regular weight message at 55% white. Monospaced timer at 35%. The screen whispers.
 
-**Auth button** — glass material effect with a subtle border. Visible enough to be tappable, quiet enough to stay out of the way.
+**Auth button.** Glass material with a subtle border, easy to find without drawing the eye.
 
 <br>
 
 ## Under the hood
 
-**Hotkey** — `CGEvent.tapCreate` on a dedicated background thread. Bypasses the LSUIElement activation issue that affects Carbon hotkeys in menu bar apps. The tap consumes the matched keystroke so it never reaches the app in front. Requires Accessibility permission.
+**Hotkey.** `CGEvent.tapCreate` on a dedicated background thread. Bypasses the LSUIElement activation issue that affects Carbon hotkeys in menu bar apps. The tap consumes the matched keystroke so it never reaches the app in front. Requires Accessibility permission.
 
-**Input blocking** — a separate `CGEventTap` intercepts keyboard, scroll, tablet and trackpad-gesture events system-wide while locked, including the Dock's own gesture stream, so a three-finger swipe can't slide another Space in. Mouse events pass through to the overlay (SwiftUI buttons need clicks). If macOS disables the tap, it re-enables synchronously in the callback.
+**Input blocking.** A separate `CGEventTap` intercepts keyboard, scroll, tablet and trackpad-gesture events system-wide while locked, including the Dock's own gesture stream, so a three-finger swipe can't slide another Space in. Mouse events pass through to the overlay (SwiftUI buttons need clicks). If macOS disables the tap, it re-enables synchronously in the callback.
 
-**Window level** — `CGShieldingWindowLevel()`, the highest level in the system. Above Spotlight, Notification Center, screen savers, everything.
+**Window level.** `CGShieldingWindowLevel()`, the highest level in the system. Above Spotlight, Notification Center, screen savers, everything.
 
-**Multi-display** — one overlay window per screen, recreated on hot-plug.
+**Multi-display.** One overlay window per screen, recreated on hot-plug.
 
-**State machine** — `LockState` enum with validated transitions. Every `transitionTo()` call is checked. State is verified again after async authentication returns.
+**State machine.** `LockState` enum with validated transitions. Every `transitionTo()` call is checked. State is verified again after async authentication returns.
 
-**Sleep prevention** — `IOPMAssertion` keeps the Mac awake while locked. With the lid closed that isn't enough, so the optional `LockpawHelper` LaunchDaemon (registered with `SMAppService`) sets `pmset disablesleep` while locked and clears it on unlock, at boot, and a minute after the app goes away. Its XPC interface is that one switch, and both ends check each other's code signature. See [SECURITY.md](SECURITY.md).
+**Sleep prevention.** `IOPMAssertion` keeps the Mac awake while locked. With the lid closed that isn't enough, so the optional `LockpawHelper` LaunchDaemon (registered with `SMAppService`) sets `pmset disablesleep` while locked and clears it on unlock, at boot, and a minute after the app goes away. Its XPC interface is that one switch, and both ends check each other's code signature. See [SECURITY.md](SECURITY.md).
 
-**Auth** — while locked, a biometrics-only `LAContext` is already armed behind the overlay, so the first finger press unlocks with nothing to click. The fallback is a password field on the lock screen itself, checked against your login password through Open Directory and rate-limited to a 30s cooldown after 3 failed attempts. The cover never comes down for it, and while the field is open Lockpaw runs in kiosk mode, so app switching and Force Quit stay blocked even though macOS hides typed keys from the input tap. A rejected finger on the armed sensor costs no attempt — it may be a palm or a bag strap, and Touch ID enforces its own lockout in hardware.
+**Auth.** While locked, a biometrics-only `LAContext` is already armed behind the overlay, so the first finger press unlocks with nothing to click. The fallback is a password field on the lock screen itself, checked against your login password through Open Directory and rate-limited to a 30s cooldown after 3 failed attempts. The cover never comes down for it, and while the field is open Lockpaw runs in kiosk mode, so app switching and Force Quit stay blocked even though macOS hides typed keys from the input tap. A rejected finger on the armed sensor costs no attempt: it may be a palm or a bag strap, and Touch ID enforces its own lockout in hardware.
 
-**Auto-updates** — Sparkle framework checks for updates automatically. Appcast hosted at getlockpaw.com.
+**Auto-updates.** Sparkle framework checks for updates automatically. Appcast hosted at getlockpaw.com.
 
 <br>
 
@@ -160,7 +160,7 @@ The lock screen is intentionally minimal. Near-black canvas. Subtle radial glow.
 
 Lockpaw is a **visual privacy tool**, not a security boundary.
 
-It guards against the accidental — a colleague, a cat, your own muscle memory while agents run. Not the intentional.
+It guards against accidents: a colleague, a cat, your own muscle memory while agents run. It won't stop someone who means to get in.
 
 <details>
 <summary><strong>What it does</strong></summary>
