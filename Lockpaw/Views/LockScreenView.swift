@@ -11,6 +11,9 @@ struct LockScreenView: View {
     var phaseOffset: CGFloat = 0
     /// Overlay screen index, so Authenticate opens its dialog on this display.
     var screenIndex: Int = 0
+    /// False when the desktop wallpaper sits behind — the dark gradient and color
+    /// pools would paint over it. The ping glow still draws either way.
+    var drawsBackdrop = true
 
     @AppStorage("showMessage") private var showMessage = true
     @AppStorage("lockMessage") private var message = Constants.defaultLockMessage
@@ -127,6 +130,7 @@ struct LockScreenView: View {
                         .animation(Constants.Anim.gentle, value: controller.unlockSucceeded)
                         .animation(Constants.Anim.standard, value: controller.lastError)
                         .allowsHitTesting(false)
+                        .legibleOverWallpaper(!drawsBackdrop)
 
                         // Time
                         TimelineView(.periodic(from: .now, by: 1)) { _ in
@@ -139,6 +143,7 @@ struct LockScreenView: View {
                         .opacity(appeared ? 1 : 0)
                         .opacity(controller.isAuthenticating || controller.unlockSucceeded ? 0.15 : 1)
                         .allowsHitTesting(false)
+                        .legibleOverWallpaper(!drawsBackdrop)
 
                         // Who is waiting — a row per session; stays until
                         // unlock. Always mounted (empty until the first ping) and faded by
@@ -152,6 +157,7 @@ struct LockScreenView: View {
                             .animation(Constants.Anim.gentle, value: controller.agentPings)
                             .animation(Constants.Anim.gentle, value: controller.unlockSucceeded)
                             .animation(Constants.Anim.gentle, value: controller.isAuthenticating)
+                            .legibleOverWallpaper(!drawsBackdrop)
                     }
 
                     Spacer()
@@ -212,6 +218,7 @@ struct LockScreenView: View {
                         }
                     }
                     .frame(height: 120)
+                    .legibleOverWallpaper(!drawsBackdrop)
                     .padding(.bottom, compact ? 16 : 40)
                     .animation(Constants.Anim.gentle, value: controller.isAuthenticating)
                     .animation(Constants.Anim.gentle, value: controller.unlockSucceeded)
@@ -219,6 +226,10 @@ struct LockScreenView: View {
                     .offset(x: shakeOffset)
                 }
             }
+            // GeometryReader pins its child top-leading. The backdrop used to make this
+            // stack full-width; over a wallpaper there is no backdrop, and the stack shrank
+            // to the content column and sat against the left edge.
+            .frame(width: geo.size.width, height: geo.size.height)
             .accessibilityElement(children: .contain)
             .accessibilityAddTraits(.isModal)
         }
@@ -290,17 +301,19 @@ struct LockScreenView: View {
 
     private func background(geo: GeometryProxy) -> some View {
         ZStack {
-            LinearGradient(
-                colors: [Color(red: 0.01, green: 0.005, blue: 0.025), .black, Color(red: 0.01, green: 0.005, blue: 0.02)],
-                startPoint: .top, endPoint: .bottom
-            ).ignoresSafeArea()
+            if drawsBackdrop {
+                LinearGradient(
+                    colors: [Color(red: 0.01, green: 0.005, blue: 0.025), .black, Color(red: 0.01, green: 0.005, blue: 0.02)],
+                    startPoint: .top, endPoint: .bottom
+                ).ignoresSafeArea()
 
-            RadialGradient(
-                colors: [Color("LockpawTeal").opacity(0.015 + breathe * 0.005), .clear],
-                center: .bottom, startRadius: 0, endRadius: 500
-            ).ignoresSafeArea().allowsHitTesting(false)
+                RadialGradient(
+                    colors: [Color("LockpawTeal").opacity(0.015 + breathe * 0.005), .clear],
+                    center: .bottom, startRadius: 0, endRadius: 500
+                ).ignoresSafeArea().allowsHitTesting(false)
 
-            if !reduceMotion { colorPools(geo: geo) }
+                if !reduceMotion { colorPools(geo: geo) }
+            }
 
             // Attention glow — fires on an agent ping. Bright and full-screen so it
             // reads from across a room while the screen stays covered.
@@ -409,5 +422,19 @@ private struct LockPasswordField: View {
         let typed = password
         password = ""
         controller.submitPassword(typed)
+    }
+}
+
+private extension View {
+    /// Over a wallpaper the text has no dark ground of its own, and busy texture eats
+    /// thin type at these opacities. A soft shadow separates it, as on the macOS lock
+    /// screen. Off over Lockpaw's own backdrop, which is already near-black.
+    @ViewBuilder
+    func legibleOverWallpaper(_ enabled: Bool) -> some View {
+        if enabled {
+            shadow(color: .black.opacity(0.6), radius: 6, x: 0, y: 1)
+        } else {
+            self
+        }
     }
 }
