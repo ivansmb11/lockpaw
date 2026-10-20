@@ -53,7 +53,7 @@ Builds unsigned → copies to `/tmp` for signing → signs with Developer ID →
 **After building a release:**
 1. Tag: `git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z`
 2. Create GitHub Release with DMG: `gh release create vX.Y.Z build/Lockpaw.dmg#Lockpaw.dmg --repo sorkila/lockpaw`
-3. Update appcast: `generate_appcast build/appcast/` → fix download URL to GitHub Releases → push `appcast.xml` to `sorkila/lockpaw-web`
+3. Update appcast: write 3 to 5 short release-note bullets as `build/appcast/Lockpaw.html` (same basename as the DMG; a bare `<ul>`, no em dashes) → `generate_appcast --embed-release-notes build/appcast/` → check the new item has a `<description>` (add it by hand if not; Sparkle's update window shows the newest item's notes, and the feed is unsigned, so notes can be fixed later) → fix download URL to GitHub Releases → push `appcast.xml` to `sorkila/lockpaw-web`
 4. Update Homebrew cask SHA256 in both `sorkila/homebrew-lockpaw` and `homebrew/Casks/lockpaw.rb`
 
 ## Project structure
