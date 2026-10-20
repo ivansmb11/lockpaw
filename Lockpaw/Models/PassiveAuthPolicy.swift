@@ -73,6 +73,25 @@ enum PassiveAuthPolicy {
         !secureInputBeforeArm && secureInputNow && !systemScreenLocked
     }
 
+    /// The agent that draws the (hidden) Touch ID prompt.
+    static let promptAgentBundleID = "com.apple.LocalAuthentication.UIAgent"
+
+    /// Whether the armed evaluation has lost the sensor to another app. When any other app
+    /// comes to the front — an agent opening a browser, an updater, a helper like
+    /// Logitech's plugin service — coreauthd stops the sensor ("UI lost focus") but never
+    /// ends the evaluation, so it stays in flight with nobody listening, and a press on the
+    /// sensor locks macOS instead. Measured on macOS 26. Lockpaw itself in front is fine
+    /// (the prompt agent takes the front back), and while macOS is locked loginwindow owns
+    /// the front and re-arming would only churn. An unknown front app is not a reason to.
+    static func armedPromptLostFocus(
+        frontmostBundleID: String?,
+        ownBundleID: String?,
+        systemScreenLocked: Bool
+    ) -> Bool {
+        guard !systemScreenLocked, let frontmostBundleID else { return false }
+        return frontmostBundleID != promptAgentBundleID && frontmostBundleID != ownBundleID
+    }
+
     static func outcome(_ result: PassiveAuthResult) -> PassiveAuthOutcome {
         if result.authenticated { return .unlock }
 

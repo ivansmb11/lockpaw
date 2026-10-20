@@ -697,6 +697,19 @@ class LockController: ObservableObject {
                 logger.warning("Secure input came up while Touch ID was armed — standing down, hotkey unlock takes priority")
                 passiveAuthSuspended = true
                 disarmPassiveAuth(endingSession: true)
+                return
+            }
+            // Another app coming forward stops the sensor without ending the evaluation,
+            // so nothing else would ever notice. Re-arming brings the prompt back to the
+            // front; at tick pace, an app that keeps grabbing focus costs one arm a second.
+            let frontmost = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+            if PassiveAuthPolicy.armedPromptLostFocus(
+                frontmostBundleID: frontmost,
+                ownBundleID: Bundle.main.bundleIdentifier,
+                systemScreenLocked: SystemSession.isScreenLocked
+            ) {
+                logger.info("passiveAuth: Touch ID prompt lost focus to \(frontmost ?? "?", privacy: .public) — re-arming")
+                armPassiveAuthAfterInterruption()
             }
             return
         }

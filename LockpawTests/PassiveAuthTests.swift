@@ -121,6 +121,35 @@ final class PassiveAuthTests: XCTestCase {
         }
     }
 
+    // MARK: - Another app in front stalls the sensor: re-arm
+
+    private let own = "com.eriknielsen.lockpaw"
+
+    /// Logitech's plugin service taking focus stopped the sensor for the rest of a lock
+    /// while the evaluation stayed in flight, so a press on the sensor locked macOS instead.
+    func testThirdPartyAppInFront_lostFocus() {
+        XCTAssertTrue(PassiveAuthPolicy.armedPromptLostFocus(
+            frontmostBundleID: "com.logi.pluginservice", ownBundleID: own, systemScreenLocked: false))
+    }
+
+    func testPromptAgentOrLockpawInFront_keepsTheEvaluation() {
+        for front in [PassiveAuthPolicy.promptAgentBundleID, own] {
+            XCTAssertFalse(PassiveAuthPolicy.armedPromptLostFocus(
+                frontmostBundleID: front, ownBundleID: own, systemScreenLocked: false), front)
+        }
+    }
+
+    /// loginwindow owns the front while macOS is locked; re-arming every tick would churn.
+    func testMacOSLocked_doesNotRearm() {
+        XCTAssertFalse(PassiveAuthPolicy.armedPromptLostFocus(
+            frontmostBundleID: "com.apple.loginwindow", ownBundleID: own, systemScreenLocked: true))
+    }
+
+    func testUnknownFrontApp_doesNotRearm() {
+        XCTAssertFalse(PassiveAuthPolicy.armedPromptLostFocus(
+            frontmostBundleID: nil, ownBundleID: own, systemScreenLocked: false))
+    }
+
     // MARK: - Outcome mapping
 
     func testSuccess_unlocks() {
