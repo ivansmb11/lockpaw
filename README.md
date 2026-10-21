@@ -53,11 +53,11 @@
 | Quick unlock | Same hotkey, or rest a finger on Touch ID |
 | Fallback unlock | Click *Use Password* at the bottom of the lock screen and type your Mac password |
 | Settings | Menu bar → Settings… |
-| Change hotkey | Settings → Shortcuts → click to record |
+| Change hotkey | Settings → General → Shortcut, click to record |
 | Change mascot, use your own image, or turn it off | Settings → Lock Screen → Mascot |
-| Hide the menu bar icon | Settings → General → Show menu bar icon (open Lockpaw from Applications to bring it back) |
-| Keep agents running with the lid closed | Settings → Lock Screen → Stay awake with the lid closed |
-| Send pings to your phone | Settings → Agents → Send pings off this Mac |
+| Hide the menu bar icon | Settings → General → Show in menu bar (open Lockpaw from Applications to bring it back) |
+| Keep agents running with the lid closed | Settings → General → Keep running with the lid closed |
+| Send pings to your phone | Settings → Agents → Send pings off this Mac → Send to |
 
 <br>
 
@@ -76,7 +76,7 @@ always names the project: *Claude Code needs permission in my-app.* The glow is 
 your agents are done and amber while any of them is blocked on you or stopped on an error
 (a red dot marks the error); a later "done" never repaints a waiting glow teal.
 
-**Easiest:** open **Settings → Agents → Connect your agent** and click your agent.
+**Easiest:** open **Settings → Agents → Connect an agent** and click your agent. A check marks the ones already connected.
 Prefer the terminal? Lockpaw ships a tiny `lockpaw` command-line tool
 (`Lockpaw.app/Contents/SharedSupport/lockpaw`); one command wires everything up,
 including installing itself into `~/.local/bin` (add `--print` to just see the snippet):
@@ -244,7 +244,7 @@ Lockpaw/
 │  ├─ LockScreenView             Mascot (dog/cat/custom) · agent-ping glow · fallback auth
 │  ├─ AmbientScreenView          Secondary display gradient animation
 │  ├─ MenuBarView                Dropdown · lock/unlock/quit
-│  ├─ SettingsView               Native tabs · hotkey recorder · updates
+│  ├─ Settings                   Native toolbar tabs (General, Lock Screen, Agents, About) · hotkey recorder · updates
 │  └─ OnboardingView             5-step wizard · hotkey · accessibility · agent alerts
 ├─ Utilities/
 │  ├─ Constants                  Timing, animations, formatting
@@ -271,7 +271,7 @@ Pushes to `main` and PRs run the build and the full unit test suite via GitHub A
 
 Everything in Lockpaw is free and MIT-licensed, and everything that ships stays free. No feature is ever moved behind a payment.
 
-If Lockpaw earns its place on your Mac, you can [sponsor me on GitHub](https://github.com/sponsors/sorkila), [buy me a coffee](https://www.buymeacoffee.com/eriknielsen), or [become a supporter](https://getlockpaw.com/support/) (pay what you want). Supporters get a few thank-yous: four extra mascots, seasonal skins for the Dog and Cat, and no once-a-year "consider supporting" line in the menu. Contributors get a supporter licence on the house.
+If Lockpaw earns its place on your Mac, you can [become a supporter](https://getlockpaw.com/support/) (pay what you want, once) or [sponsor me on GitHub](https://github.com/sponsors/sorkila). Supporters get a few thank-yous: four extra mascots, seasonal skins for the Dog and Cat, and no more asks: Lockpaw asks once, in a small card after it has done its job, and after that at most once a year in the menu bar. Contributors get a supporter licence on the house.
 
 <br>
 

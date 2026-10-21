@@ -9,7 +9,6 @@ struct OnboardingView: View {
     @State private var accessibilityGranted = AccessibilityChecker.isEnabled
     @State private var accessibilityTimer: Timer?
     @State private var hotkeyConflict: String?
-    @Environment(\.openSettings) private var openSettings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage(Mascot.storageKey) private var selectedMascot = Mascot.defaultValue
     @State private var mascotBreath = false
@@ -102,7 +101,7 @@ struct OnboardingView: View {
                 hasCompletedOnboarding = true
                 // Open Settings immediately — this activates the event pipeline
                 // so the global hotkey works without needing to click the menu bar.
-                openSettings()
+                NotificationCenter.default.post(name: .lockpawOpenSettings, object: nil)
             }
         }
     }

@@ -47,6 +47,10 @@ targets:
         LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks"
         COMBINE_HIDPI_IMAGES: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # The control accent: a deeper Lockpaw teal, because brand teal (#00D4AA) can't carry
+        # white text (1.9:1 on a selected segment or a default button). #008A6E gives 4.3:1,
+        # better than system blue. macOS uses it when the user's accent is Multicolor.
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: LockpawAccent
       configs:
         Debug:
           PRODUCT_BUNDLE_IDENTIFIER: com.eriknielsen.lockpaw.debug

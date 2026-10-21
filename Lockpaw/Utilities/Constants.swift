@@ -56,6 +56,8 @@ enum Constants {
         static let agentSetupMinSpin: TimeInterval = 1.2              // seconds; floor on the Settings connect-spinner so success registers
         static let hotkeyRefreshDelay: TimeInterval = 1.0             // seconds; let wake / unlock / session return settle before rebuilding the hotkey tap (debounced)
         static let passwordEntryIdleTimeout: TimeInterval = 30.0      // seconds without typing before the lock-screen password field closes and Touch ID re-arms
+        static let supportCardDelay: TimeInterval = 3.0               // seconds after an unlock before the supporter card appears (the cover is gone, the user is looking)
+        static let supportCardAutoClose: TimeInterval = 3.0           // seconds the "No problem" ending stays before it fades
 
         // Fade to black — dim the lock UI to pure black after inactivity (OLED burn-in guard).
         static let fadeToBlackDuration: TimeInterval = 6.0            // visible → black fade; the one sanctioned >1.6s motion token (DESIGN.md §4)

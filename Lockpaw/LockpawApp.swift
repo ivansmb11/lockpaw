@@ -13,18 +13,16 @@ struct LockpawApp: App {
 
     var body: some Scene {
         // `isInserted` removes the item entirely (not just its icon) when the user
-        // hides it in Settings → General. Reopening the app from Finder or
+        // hides it in Settings → General → Show in menu bar. Reopening the app from Finder or
         // `lockpaw://settings` flips the preference back on (AppDelegate).
+        // Settings is a window we own (`SettingsWindowController`), not a SwiftUI
+        // `Settings` scene: the scene can only be opened from inside a View on macOS 26.
         MenuBarExtra(isInserted: $showMenuBarIcon) {
             MenuBarView(controller: lockController)
         } label: {
             Image("MenuBarIcon")
                 .renderingMode(.template)
                 .opacity(lockController.state == .locked ? 1.0 : 0.55)
-        }
-
-        Settings {
-            SettingsView(viewModel: appDelegate.updateCheckViewModel)
         }
     }
 
@@ -62,19 +60,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Start Sparkle after app is fully launched
         updateCheckViewModel.bind(to: updaterController.updater)
+        MainActor.assumeIsolated {
+            SettingsWindowController.shared.updateCheckViewModel = updateCheckViewModel
+            // Created now, not on first use, so a licence entered before the first lock or
+            // menu open still gets its welcome card.
+            _ = SupportAskController.shared
+        }
         do {
             try updaterController.updater.start()
         } catch {
             logger.error("Sparkle updater failed to start: \(error.localizedDescription)")
         }
 
-        // Apply saved appearance
-        let mode = UserDefaults.standard.integer(forKey: "appearanceMode")
-        switch mode {
-        case 1: NSApp.appearance = NSAppearance(named: .aqua)
-        case 2: NSApp.appearance = NSAppearance(named: .darkAqua)
-        default: NSApp.appearance = nil
-        }
+        // Lockpaw follows the system appearance; the old Light/Dark override is gone.
+        UserDefaults.standard.removeObject(forKey: "appearanceMode")
 
         // Only register hotkey if onboarding is complete (Accessibility granted).
         // Otherwise, wait for onboarding to finish and post the notification.
@@ -172,10 +171,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func openSettingsWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        // SwiftUI's Settings scene has no public opener outside a View; this
-        // selector is the documented-by-practice route on macOS 14+.
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        MainActor.assumeIsolated { SettingsWindowController.shared.show() }
     }
 
     private func showOnboarding() {
@@ -252,6 +248,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             case "settings":
                 UserDefaults.standard.set(true, forKey: Constants.showMenuBarIconKey)
                 NotificationCenter.default.post(name: .lockpawOpenSettings, object: nil)
+            #if DEBUG
+            // Review the supporter card without waiting for its gates. Debug builds only.
+            case "support-card": SupportAskController.shared.previewCard()
+            case "support-card-welcome": SupportAskController.shared.previewWelcome()
+            case let host? where host.hasPrefix("settings-"):
+                let name = host.dropFirst("settings-".count).lowercased()
+                if let section = SettingsSection.allCases.first(where: { $0.rawValue.lowercased() == name }) {
+                    SettingsRequest.open(section)
+                }
+            #endif
             default: logger.warning("Unknown URL scheme: \(url.host ?? "nil")")
             }
         }

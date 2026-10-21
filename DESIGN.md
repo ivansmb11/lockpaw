@@ -30,6 +30,7 @@ Dark-first. One accent. Color is used as **signal**, never decoration.
 |---|---|---|
 | `accent` (teal) | `#00D4AA` · `rgb(0,212,170)` | Primary brand: interactive text, glow, selection, focus |
 | `accent-soft` | `teal @ 0.07–0.15` | Tinted fills behind teal text (bordered buttons, selected segment) |
+| `accent-control` | `#008A6E` | Native controls and text in Settings (`LockpawAccent`, the app's global accent). Brand teal can't carry white text (1.9:1); this is 4.3:1 |
 
 ### Signal (the proximity gradient — own this)
 Lockpaw's distinctive idea: state reads as **distance to danger**, on one ramp.
