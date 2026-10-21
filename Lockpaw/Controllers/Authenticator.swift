@@ -60,7 +60,7 @@ class Authenticator {
 
         var error: NSError?
         guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
-            logger.info("Cannot arm Touch ID: \(error?.localizedDescription ?? "unknown")")
+            logger.notice("Cannot arm Touch ID: \(error?.localizedDescription ?? "unknown", privacy: .public)")
             return .failure((error as? LAError)?.code ?? .biometryNotAvailable)
         }
 
@@ -73,7 +73,7 @@ class Authenticator {
                 return PassiveAuthResult(authenticated: authenticated, errorCode: nil)
             } catch {
                 await MainActor.run {
-                    logger.info("Armed Touch ID ended: \(error.localizedDescription)")
+                    logger.notice("Armed Touch ID ended: \(error.localizedDescription, privacy: .public)")
                 }
                 return .failure((error as? LAError)?.code ?? .systemCancel)
             }

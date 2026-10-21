@@ -56,6 +56,10 @@ final class WebhookRelayController: ObservableObject {
 
     func setSecret(_ secret: Secret, _ value: String) {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Settings commits every field when it closes (the window tears its panes down); only touch the Keychain for a real
+        // change. A needless write rewrites the item and can make macOS ask again whether
+        // Lockpaw may read its own secret.
+        guard trimmed != self.secret(secret) else { return }
         if trimmed.isEmpty {
             Keychain.delete(service: Self.keychainService, account: secret.rawValue)
         } else {

@@ -63,13 +63,23 @@ final class SupportAskTests: XCTestCase {
     private let day: TimeInterval = 86_400
     private let now = Date(timeIntervalSince1970: 1_800_000_000)
 
-    private func state(firstUseDaysAgo: Double = 30, lastAskedDaysAgo: Double? = nil, pendingDaysAgo: Double? = nil, never: Bool = false) -> SupportAsk.State {
+    private func state(firstUseDaysAgo: Double = 30, lastAskedDaysAgo: Double? = nil, pendingDaysAgo: Double? = nil, never: Bool = false,
+                       pingUnlocks: Int = 0, cardShown: Bool = true) -> SupportAsk.State {
         SupportAsk.State(
             firstUse: now.addingTimeInterval(-firstUseDaysAgo * day),
             lastAsked: lastAskedDaysAgo.map { now.addingTimeInterval(-$0 * day) },
             pendingSince: pendingDaysAgo.map { now.addingTimeInterval(-$0 * day) },
-            dismissedForever: never
+            dismissedForever: never,
+            pingUnlocks: pingUnlocks,
+            cardShown: cardShown
         )
+    }
+
+    /// A user the card is waiting for: a month in, ten unlocks after a ping, never asked.
+    private func cardReady(_ change: (inout SupportAsk.State) -> Void = { _ in }) -> SupportAsk.State {
+        var ready = state(pingUnlocks: SupportAsk.cardMinimumPingUnlocks, cardShown: false)
+        change(&ready)
+        return ready
     }
 
     func testRaisesAfterTwoWeeksForNonSupporters() {
@@ -97,6 +107,59 @@ final class SupportAskTests: XCTestCase {
 
     func testBecomingASupporterHidesAPendingAsk() {
         XCTAssertFalse(SupportAsk.isShowing(state(pendingDaysAgo: 1), isSupporter: true, now: now))
+    }
+
+    // MARK: - The card
+
+    func testTheCardComesUpOnceLockpawHasProvenItself() {
+        XCTAssertTrue(SupportAsk.cardIsDue(cardReady(), isSupporter: false, allFinished: true, now: now))
+        XCTAssertFalse(SupportAsk.cardIsDue(cardReady { $0.pingUnlocks = SupportAsk.cardMinimumPingUnlocks - 1 },
+                                            isSupporter: false, allFinished: true, now: now))
+        XCTAssertFalse(SupportAsk.cardIsDue(cardReady { $0.firstUse = self.now.addingTimeInterval(-13 * self.day) },
+                                            isSupporter: false, allFinished: true, now: now))
+    }
+
+    func testTheCardWaitsForEveryAgentToHaveFinished() {
+        // An agent waiting on a permission prompt: the user is rushing back, not looking around.
+        XCTAssertFalse(SupportAsk.cardIsDue(cardReady(), isSupporter: false, allFinished: false, now: now))
+    }
+
+    func testTheCardIsShownOnceEver() {
+        let shown = SupportAsk.showingCard(cardReady(), now: now)
+        XCTAssertTrue(shown.cardShown)
+        // Even a year on, with the pending ask long answered.
+        var later = shown
+        later.pendingSince = nil
+        later.lastAsked = now
+        XCTAssertFalse(SupportAsk.cardIsDue(later, isSupporter: false, allFinished: true, now: now.addingTimeInterval(400 * day)))
+    }
+
+    func testTheCardNeverReachesSupportersOrThoseWhoSaidNo() {
+        XCTAssertFalse(SupportAsk.cardIsDue(cardReady(), isSupporter: true, allFinished: true, now: now))
+        XCTAssertFalse(SupportAsk.cardIsDue(cardReady { $0.dismissedForever = true }, isSupporter: false, allFinished: true, now: now))
+    }
+
+    func testTheCardRespectsAMenuAskFromTheLastYear() {
+        // Asked in the menu by 1.6: the card waits out the year.
+        XCTAssertFalse(SupportAsk.cardIsDue(cardReady { $0.lastAsked = self.now.addingTimeInterval(-100 * self.day) },
+                                            isSupporter: false, allFinished: true, now: now))
+        XCTAssertTrue(SupportAsk.cardIsDue(cardReady { $0.lastAsked = self.now.addingTimeInterval(-366 * self.day) },
+                                           isSupporter: false, allFinished: true, now: now))
+    }
+
+    func testAnUnansweredCardFoldsIntoTheMenuLine() {
+        let shown = SupportAsk.showingCard(cardReady(), now: now)
+        XCTAssertTrue(SupportAsk.isShowing(shown, isSupporter: false, now: now.addingTimeInterval(day)))
+        XCTAssertFalse(SupportAsk.isShowing(shown, isSupporter: false, now: now.addingTimeInterval(8 * day)))
+    }
+
+    func testTheMenuLineOnlyComesAfterTheCard() {
+        XCTAssertFalse(SupportAsk.shouldRaise(after: cardReady(), isSupporter: false, now: now))
+        XCTAssertTrue(SupportAsk.shouldRaise(after: cardReady { $0.cardShown = true }, isSupporter: false, now: now))
+    }
+
+    func testPingUnlocksCount() {
+        XCTAssertEqual(SupportAsk.countingPingUnlock(state(pingUnlocks: 4)).pingUnlocks, 5)
     }
 }
 

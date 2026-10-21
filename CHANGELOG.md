@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.7.0] - 2026-10-21
+
+### Changed
+
+- Lockpaw asks for support once, in a small card under the menu bar, after it has kept watch for a while and only when your agents have all finished. It thanks you, says what support pays for, and goes away for good with one click. After that, at most once a year, a line in the menu bar as before. Never on the lock screen, and supporters never see it.
+- A new supporter licence now gets a proper welcome: the four supporter mascots introduce themselves.
+- **Settings, redone.** Four tabs grouped by what you're doing (General, Lock Screen, Agents, About) instead of six, in the native macOS style with Lockpaw's teal. The window is smaller and steady between tabs, and long tabs scroll instead of running off the bottom. Lock Screen has a live preview that follows your choices. Agents shows which of your agents are already connected. Fewer words everywhere.
+- The Appearance setting (System, Light, Dark) is gone; Lockpaw follows your Mac.
+- Supporter mascots only appear in the mascot picker for supporters, instead of as a dimmed row.
+- Buy Me a Coffee is gone. The supporter licence (pay what you want) and GitHub Sponsors remain, and sponsors can ask for a free licence.
+
+### Fixed
+
+- On macOS 26, opening Settings from `lockpaw://settings`, by opening Lockpaw from Applications while the menu bar icon is hidden, or from inside the app did nothing. Only the menu bar item worked.
+- Touch ID problems now leave a readable trail in the system log, so a sensor that stops responding can be explained.
+- Opening Settings no longer saves the default relay server to the keychain, and relay settings are only written when they change.
+- The shortcut recorder in Settings could keep listening after the window closed, including on the lock screen, where a capital letter typed into the password field could become the new shortcut. It now stops when Settings closes, only ever listens while unlocked, and needs Command, Option or Control.
+
 ## [1.6.4] - 2026-10-20
 
 ### Fixed

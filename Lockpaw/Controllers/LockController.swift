@@ -226,6 +226,7 @@ class LockController: ObservableObject {
 
     func lock() {
         guard transitionTo(.locking) else { return }
+        SupportAskController.shared.lockStarted()
         guard AccessibilityChecker.isEnabled else {
             AccessibilityChecker.promptIfNeeded()
             transitionTo(.unlocked)
@@ -522,9 +523,13 @@ class LockController: ObservableObject {
     }
 
     private func unlock() {
-        // An unlock after an agent ping is Lockpaw having done its job — the one moment
-        // the yearly support ask may come up (in the menu, never here).
-        if !agentPings.isEmpty { SupportAskController.shared.noteUnlockAfterPing() }
+        // An unlock after an agent ping is Lockpaw having done its job: the one moment the
+        // support ask may come up (the card or the menu, never here). The card only when
+        // every agent finished; one waiting on a permission prompt is not a breakpoint.
+        if !agentPings.isEmpty {
+            let allFinished = agentPings.pings.allSatisfy { $0.kind.status == .done }
+            SupportAskController.shared.noteUnlockAfterPing(allFinished: allFinished)
+        }
         presentationController.stop()
         disarmPassiveAuth(endingSession: true)
         endPasswordEntry()
@@ -592,7 +597,9 @@ class LockController: ObservableObject {
 
         disarmPassiveAuth()
 
-        logger.info("passiveAuth: arming (biometry=\(self.biometryAvailable), suspended=\(self.passiveAuthSuspended), failCount=\(self.failCount))")
+        // Notice, not info: macOS keeps notice lines, so a Touch ID that went quiet can be
+        // read back from the log afterwards. A handful per lock.
+        logger.notice("passiveAuth: arming (failCount=\(self.failCount, privacy: .public))")
         let generation = passiveAuthGeneration
         secureInputBeforeArm = IsSecureEventInputEnabled()
         passiveEvaluationInFlight = true
@@ -636,13 +643,13 @@ class LockController: ObservableObject {
 
     private func runPassiveAuth(generation: Int) async {
         let result = await authenticator.armBiometrics()
-        logger.info("passiveAuth: ended authenticated=\(result.authenticated) error=\(result.errorCode.map { String($0.rawValue) } ?? "nil") generation=\(generation)/\(self.passiveAuthGeneration) state=\(String(describing: self.state))")
+        logger.notice("passiveAuth: ended authenticated=\(result.authenticated, privacy: .public) error=\(result.errorCode.map { String($0.rawValue) } ?? "nil", privacy: .public) generation=\(generation, privacy: .public)/\(self.passiveAuthGeneration, privacy: .public) state=\(String(describing: self.state), privacy: .public)")
         guard generation == passiveAuthGeneration, state == .locked else { return }
         passiveEvaluationInFlight = false
 
         switch PassiveAuthPolicy.outcome(result) {
         case .unlock:
-            logger.info("passiveAuth: match — unlocking")
+            logger.notice("passiveAuth: match, unlocking")
             NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
             // The finger press is itself the confirmation, so this path does not hold the
             // lock screen for the success beat the way the button path does — after a
@@ -665,6 +672,7 @@ class LockController: ObservableObject {
             break
 
         case .standDown:
+            logger.notice("passiveAuth: standing down for this lock (error=\(result.errorCode.map { String($0.rawValue) } ?? "nil", privacy: .public))")
             passiveAuthSuspended = true
             passiveAuthLive = false
         }
@@ -708,7 +716,7 @@ class LockController: ObservableObject {
                 ownBundleID: Bundle.main.bundleIdentifier,
                 systemScreenLocked: SystemSession.isScreenLocked
             ) {
-                logger.info("passiveAuth: Touch ID prompt lost focus to \(frontmost ?? "?", privacy: .public) — re-arming")
+                logger.notice("passiveAuth: Touch ID prompt lost focus to \(frontmost ?? "?", privacy: .public), re-arming")
                 armPassiveAuthAfterInterruption()
             }
             return

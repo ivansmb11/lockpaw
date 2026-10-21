@@ -43,8 +43,8 @@ struct MenuBarView: View {
 
             Divider()
 
-            SettingsLink {
-                Text("Settings\u{2026}")
+            Button("Settings\u{2026}") {
+                NotificationCenter.default.post(name: .lockpawOpenSettings, object: nil)
             }
             .keyboardShortcut(",")
 
